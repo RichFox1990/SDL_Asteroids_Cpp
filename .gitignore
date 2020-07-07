@@ -1,0 +1,11 @@
+# ignore .vs and debug folder
+.vs/
+Debug/
+
+# ignore .filters and .user
+*.vcxproj
+*.sln
+*.filters
+*.user
+
+*.gitattributes
