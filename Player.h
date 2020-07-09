@@ -14,6 +14,6 @@ public:
 
 private:
 	SDL_Texture* img = nullptr;
-	const int MAX_SPEED = 300;
+	const double MAX_SPEED = 350.0;
 };
 

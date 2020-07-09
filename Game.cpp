@@ -135,7 +135,7 @@ void Game::handle_input(const double& dt)
 			{
 				cout << "A pressed";
 			case SDLK_SPACE:
-				entities.push_back(std::make_unique<Bullet>(player));
+				//entities.push_back(std::make_unique<Bullet>(player));
 				break;
 			}
 		}
@@ -146,18 +146,27 @@ void Game::handle_input(const double& dt)
 	//Uint8* keystates = SDL_GetKeyState(NULL);
 	if (keystates[SDL_SCANCODE_W])
 	{
-		player->vel.x += sin(player->angle * PI / 180) * 600.0f * dt;
-		player->vel.y += -cos(player->angle * PI / 180) * 600.0f * dt;
+		player->vel.x += sin(player->angle * PI / 180) * SHIP_THRUST * dt;
+		player->vel.y += -cos(player->angle * PI / 180) * SHIP_THRUST * dt;
 	}
 	if (keystates[SDL_SCANCODE_A])
 	{
-		player->angle -= 500.0 * dt;
+		player->angle -= ANGLE_MODIFIER * dt;
 		player->angle = player->angle % 360;
 	}
 	if (keystates[SDL_SCANCODE_D])
 	{
-		player->angle += 500 * dt;
+		player->angle += ANGLE_MODIFIER * dt;
 		player->angle = player->angle % 360;
+	}
+	if (keystates[SDL_SCANCODE_SPACE])
+	{
+		current_shot = SDL_GetTicks();
+		if (current_shot - last_shot > shot_delay)
+		{
+			entities.push_back(std::make_unique<Bullet>(player));
+			last_shot = current_shot;
+		}
 	}
 }
 
@@ -188,22 +197,9 @@ void Game::Update(const double& dt)
 		ent->Update(dt);
 		ent->WrapCoords();
 	}
-	/*int i = 0;
-	for (auto& ent : entities)
-	{
-		if (ent->is_dead)
-		{
-			entities.erase(entities.begin() + i);
-		}
-		i++;
-	}*/
-	/*if (entities.size() > 0)
-	{
-		auto i = remove_if(entities.begin(), entities.end(), [&](std::unique_ptr<Entity> e) { return (e->is_dead); });
-		if (i != entities.end())
-			entities.erase(i);
-	}*/
-	//std::cout << player->angle << std::endl;
+
+	// I entity is marked as dead, remove them
+	entities.erase(std::remove_if(entities.begin(), entities.end(), [](std::unique_ptr<Entity>& e) { return (e->is_dead); }), entities.end());
 }
 
 

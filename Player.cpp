@@ -41,27 +41,25 @@ void Player::WrapCoords()
 
 void Player::Draw()
 {
-	//SDL_RenderCopy(Game::gRenderer, img, NULL, rect);
 	SDL_RenderCopyEx(Game::gRenderer, img, NULL, rect, angle, &center, SDL_FLIP_NONE);
-
 }
 
 
 void Player::Update(double const& dt)
 {
-	if (vel.x > MAX_SPEED) { vel.x = MAX_SPEED; }
-	else if (vel.x < -MAX_SPEED) { vel.x = -MAX_SPEED; }
-
-	if (vel.y > MAX_SPEED) { vel.y = MAX_SPEED; }
-	else if (vel.y < -MAX_SPEED) { vel.y = -MAX_SPEED; }
+	// Cap velocity and scale if limit reached
+	double distance = sqrt((pow(vel.x, 2) + pow(vel.y, 2)));
+	if (distance > MAX_SPEED)
+	{
+		vel.x = (vel.x / distance) * MAX_SPEED;
+		vel.y = (vel.y / distance) * MAX_SPEED;
+	}
 
 	pos.x += vel.x * dt;
 	pos.y += vel.y * dt;
 
 	rect->x = pos.x;
 	rect->y = pos.y;
-
-	//std::cout << vel.x << " : " << vel.y << std::endl;
 }
 
 Player::~Player()

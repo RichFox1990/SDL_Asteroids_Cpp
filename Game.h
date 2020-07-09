@@ -34,6 +34,12 @@ public:
 
 	static const int SCREEN_HEIGHT = 620*1.5;
 	static const int SCREEN_WIDTH = 900*1.5;
+	const int SHIP_THRUST = 750;
+	const int ANGLE_MODIFIER = 500;
+
+	double shot_delay = 250;
+	Uint32 current_shot = SDL_GetTicks();
+	Uint32 last_shot = 0;
 
 	SDL_Rect full_viewport{ 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT };
 	Point screen_center{ SCREEN_WIDTH/2, SCREEN_HEIGHT/2 };

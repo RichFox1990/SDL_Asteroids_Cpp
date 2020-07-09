@@ -4,8 +4,8 @@
 
 Bullet::Bullet(Entity* player)
 {
-	pos.x = sin((double)angle * PI / 180.0) + player->rect->x +player->width / 2;
-	pos.y = -cos((double)angle * PI / 180.0) + player->rect->y +player->height / 2;
+	pos.x = sin((double)angle * PI / 180.0) + player->rect->x + player->width / 2;
+	pos.y = -cos((double)angle * PI / 180.0) + player->rect->y + player->height / 2;
 	angle = player->angle;
 
 	rect = new SDL_Rect{ (int)pos.x, (int)pos.y, 4, 4 };
@@ -50,7 +50,6 @@ void Bullet::Draw()
 	SDL_SetRenderDrawColor(Game::gRenderer, 0, 255, 0, 255);
 	//SDL_RenderDrawPoint(Game::gRenderer, pos.x, pos.y);
 	SDL_RenderFillRect(Game::gRenderer, rect);
-	//SDL_draw
 }
 
 Bullet::~Bullet()
