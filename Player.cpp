@@ -9,8 +9,33 @@ Player::Player(double x, double y)
 	img = Game::game_images[Game::eImages::SHIP]->texture;
 	rect = Game::game_images[Game::eImages::SHIP]->GetRect(x, y);
 
+	width = rect->w;
+	height = rect->h;
+
 	center.x = rect->w * .5;
-	center.y = rect->h * .6;
+	center.y = rect->h * .5;
+
+	wrap_coords = true;
+}
+
+void Player::WrapCoords()
+{
+	if (pos.x < 0.0 - width)
+	{
+		pos.x = Game::SCREEN_WIDTH;
+	}
+	if (pos.x > Game::SCREEN_WIDTH)
+	{
+		pos.x = 0.0 - width;
+	}
+	if (pos.y < 0.0 - height)
+	{
+		pos.y = Game::SCREEN_HEIGHT;
+	}
+	if (pos.y > Game::SCREEN_HEIGHT)
+	{
+		pos.y = 0.0 - height;
+	}
 }
 
 
@@ -24,11 +49,11 @@ void Player::Draw()
 
 void Player::Update(double const& dt)
 {
-	//if (vel.x > MAX_SPEED) { vel.x = MAX_SPEED; }
-	//else if (vel.x < -MAX_SPEED) { vel.x = -MAX_SPEED; }
+	if (vel.x > MAX_SPEED) { vel.x = MAX_SPEED; }
+	else if (vel.x < -MAX_SPEED) { vel.x = -MAX_SPEED; }
 
-	//if (vel.y > MAX_SPEED) { vel.y = MAX_SPEED; }
-	//else if (vel.y < -MAX_SPEED) { vel.y = -MAX_SPEED; }
+	if (vel.y > MAX_SPEED) { vel.y = MAX_SPEED; }
+	else if (vel.y < -MAX_SPEED) { vel.y = -MAX_SPEED; }
 
 	pos.x += vel.x * dt;
 	pos.y += vel.y * dt;

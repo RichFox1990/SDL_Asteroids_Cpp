@@ -1,5 +1,6 @@
 #include "Game.h"
 #include <iostream>
+#include "Bullet.h"
 //#include "..\Maths\MyMaths.h"
 
 
@@ -118,12 +119,6 @@ void Game::Draw()
 }
 
 
-void Game::viewPortRender()
-{
-
-}
-
-
 void Game::handle_input(const double& dt)
 {
 	while (SDL_PollEvent(&events) != 0)
@@ -139,26 +134,9 @@ void Game::handle_input(const double& dt)
 			switch (events.key.keysym.sym)
 			{
 				cout << "A pressed";
-			case SDLK_w:
-				// ACCELERATION changes VELOCITY (with respect to time)
-				//player->vel.x += sin(player->angle * PI / 180) * 500.0f * dt;
-				//player->vel.y += -cos(player->angle * PI / 180) * 500.0f * dt;
-				//player->vel.y -= 500 * dt;
+			case SDLK_SPACE:
+				entities.push_back(std::make_unique<Bullet>(player));
 				break;
-			//case SDLK_s:
-			//	//player->vel.y += 500.0 * dt;
-			//	break;
-			//case SDLK_a:
-			//	player->angle -= 500.0 * dt;
-			//	player->angle = player->angle % 360;
-			//	break;
-			//case SDLK_d:
-			//	player->angle += 500 * dt;
-			//	player->angle = player->angle % 360;
-			//	break;
-
-			
-
 			}
 		}
 	
@@ -208,9 +186,24 @@ void Game::Update(const double& dt)
 	for (auto& ent : entities)
 	{
 		ent->Update(dt);
+		ent->WrapCoords();
 	}
-
-	std::cout << player->angle << std::endl;
+	/*int i = 0;
+	for (auto& ent : entities)
+	{
+		if (ent->is_dead)
+		{
+			entities.erase(entities.begin() + i);
+		}
+		i++;
+	}*/
+	/*if (entities.size() > 0)
+	{
+		auto i = remove_if(entities.begin(), entities.end(), [&](std::unique_ptr<Entity> e) { return (e->is_dead); });
+		if (i != entities.end())
+			entities.erase(i);
+	}*/
+	//std::cout << player->angle << std::endl;
 }
 
 
