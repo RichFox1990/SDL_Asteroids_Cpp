@@ -1,6 +1,8 @@
 # ignore .vs and debug folder
 .vs/
 Debug/
+Release/
+x64/
 
 # ignore .filters and .user
 *.vcxproj

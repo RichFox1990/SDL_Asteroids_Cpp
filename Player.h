@@ -5,9 +5,8 @@
 class Player : public Entity
 {
 public:
-	Player(double x = 0.0, double y = 0.0);
+	Player(double x, double y);
 
-	void WrapCoords();
 	void Draw() override;
 	void Update(double const& dt) override;
 	~Player(); // clear rects

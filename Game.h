@@ -1,14 +1,9 @@
 #pragma once
 #include <iostream>
-#include "TextureManager.h"
-#include "ImageData.h"
 #include "SDL.h"
-#include "SDL_Timer.h"
 #include <vector>
-#include "Point.h"
-#include "Entity.h"
 #include "Player.h"
-//#include "..\Maths\MyMaths.h"
+#include "DelayTimer.h"
 
 static const double PI = 3.14159265;
 
@@ -18,11 +13,15 @@ public:
 	~Game();
 	// Methods
 	void init();
+	SDL_Texture* load_image_data(std::string path, bool& allMediaLoaded);
+	static SDL_Rect* GetRect(SDL_Texture* texture, int x, int y);
 	void load_media();
 	void splash_screen(const int time_to_display);
 	void exit_game();
 	void set_running(const bool new_bool);
 	bool is_running();
+
+	void CreateAsteroids(int amount, int size, bool isCollidable, bool allowed_near_player);
 
 	void Draw();
 
@@ -32,27 +31,25 @@ public:
 
 	// Variables
 
-	static const int SCREEN_HEIGHT = 620*1.5;
-	static const int SCREEN_WIDTH = 900*1.5;
+	static const int SCREEN_HEIGHT = 620 * 1.5;
+	static const int SCREEN_WIDTH = 900 * 1.5;
+	int screen_center_x = SCREEN_WIDTH / 2;
+	int screen_center_y = SCREEN_HEIGHT / 2;
+
 	const int SHIP_THRUST = 750;
-	const int ANGLE_MODIFIER = 500;
+	const int ANGLE_MODIFIER = 350;
 
-	double shot_delay = 250;
-	Uint32 current_shot = SDL_GetTicks();
-	Uint32 last_shot = 0;
+	DelayTimer shot_delay{ 250.0f };
 
-	SDL_Rect full_viewport{ 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT };
-	Point screen_center{ SCREEN_WIDTH/2, SCREEN_HEIGHT/2 };
-
-	// Enum reference for menuImagesName and the gImages array
+	// Enum reference for gImages array of textures
 	struct eImages
 	{
 		enum names
 		{
 			SPLASH,
 			SHIP,
-			ASTROID1,
-			ASTRIOD2,
+			ASTEROID1,
+			ASTEROID2,
 			TOTAL_IMAGES
 		};
 	};
@@ -69,7 +66,7 @@ public:
 
 	static SDL_Renderer* gRenderer;
 
-	static ImageData* game_images[eImages::TOTAL_IMAGES]; // array of pointers to image info created in the ImageData struct (unreferenced by enImages enumerator)
+	static SDL_Texture* game_images[eImages::TOTAL_IMAGES]; // array of pointers to Textures created (unreferenced by enImages enumerator)
 
 
 private:

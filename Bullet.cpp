@@ -4,33 +4,34 @@
 
 Bullet::Bullet(Entity* player)
 {
-	pos.x = sin((double)angle * PI / 180.0) + player->rect->x + player->width / 2;
-	pos.y = -cos((double)angle * PI / 180.0) + player->rect->y + player->height / 2;
 	angle = player->angle;
+	pos_x = sin((double)angle * PI / 180.0) * player->height / 4 + player->rect->x + player->width / 2;
+	pos_y = -cos((double)angle * PI / 180.0) * player->height / 4 + player->rect->y + player->height / 2;
 
-	rect = new SDL_Rect{ (int)pos.x, (int)pos.y, 4, 4 };
-
-	vel.x = sin((double)angle * PI / 180.0) * MAX_SPEED*2;
-	vel.y = -cos((double)angle * PI / 180.0) * MAX_SPEED*2;
-
-	wrap_coords = false;
+	// bullet rect (4x4)
+	rect = new SDL_Rect{ (int)pos_x, (int)pos_y, 5, 5 };
+	width = rect->w;
+	height = rect->h;
+	// set bullet velocity
+	vel_x = sin((double)angle * PI / 180.0) * MAX_SPEED;
+	vel_y = -cos((double)angle * PI / 180.0) * MAX_SPEED;
 }
 
 void Bullet::WrapCoords()
 {
-	if (pos.x < 0.0 - width)
+	if (pos_x < 0.0 - width)
 	{
 		is_dead = true;
 	}
-	if (pos.x > Game::SCREEN_WIDTH)
+	if (pos_x > Game::SCREEN_WIDTH)
 	{
 		is_dead = true;
 	}
-	if (pos.y < 0.0 - height)
+	if (pos_y < 0.0 - height)
 	{
 		is_dead = true;
 	}
-	if (pos.y > Game::SCREEN_HEIGHT)
+	if (pos_y > Game::SCREEN_HEIGHT)
 	{
 		is_dead = true;
 	}
@@ -38,17 +39,16 @@ void Bullet::WrapCoords()
 
 void Bullet::Update(double const& dt)
 {
-	pos.x += vel.x * dt;
-	pos.y += vel.y * dt;
+	pos_x += vel_x * dt;
+	pos_y += vel_y * dt;
 
-	rect->x = pos.x;
-	rect->y = pos.y;
+	rect->x = pos_x;
+	rect->y = pos_y;
 }
 
 void Bullet::Draw()
 {
 	SDL_SetRenderDrawColor(Game::gRenderer, 0, 255, 0, 255);
-	//SDL_RenderDrawPoint(Game::gRenderer, pos.x, pos.y);
 	SDL_RenderFillRect(Game::gRenderer, rect);
 }
 

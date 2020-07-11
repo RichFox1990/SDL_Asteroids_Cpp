@@ -1,14 +1,11 @@
 #include "Game.h"
-#include <iostream>
+#include "Asteroid.h"
 #include "Bullet.h"
-//#include "..\Maths\MyMaths.h"
-
-
-using namespace std;
+#include <SDL_image.h>
 
 SDL_Event Game::events;
 
-ImageData* Game::game_images[eImages::TOTAL_IMAGES];
+SDL_Texture* Game::game_images[eImages::TOTAL_IMAGES];
 
 SDL_Renderer* Game::gRenderer = nullptr;
 
@@ -21,7 +18,7 @@ return "bool" to indicate successful operation or not*/
 
 	if (SDL_Init(SDL_INIT_VIDEO + SDL_INIT_AUDIO) < 0) {
 
-		cout << "Error initializing SDL_INIT : " << SDL_GetError() << endl;
+		std::cout << "Error initializing SDL_INIT : " << SDL_GetError() << std::endl;
 
 		success = false;
 	}
@@ -32,7 +29,7 @@ return "bool" to indicate successful operation or not*/
 		gWindow = SDL_CreateWindow("My Game", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, SCREEN_WIDTH, SCREEN_HEIGHT, SDL_WINDOW_SHOWN);
 		if (gWindow == NULL)
 		{
-			cout << "Window could not be created! SDL Error: " << SDL_GetError() << endl;
+			std::cout << "Window could not be created! SDL Error: " << SDL_GetError() << std::endl;
 			success = false;
 		}
 		else
@@ -42,7 +39,7 @@ return "bool" to indicate successful operation or not*/
 
 			if (gRenderer == NULL)
 			{
-				cout << "Renderer failed to init. ERROR: " << SDL_GetError() << endl;
+				std::cout << "Renderer failed to init. ERROR: " << SDL_GetError() << std::endl;
 				success = false;
 			}
 
@@ -55,7 +52,7 @@ return "bool" to indicate successful operation or not*/
 				int imgFlags = IMG_INIT_PNG;
 				if (!(IMG_Init(imgFlags) & imgFlags))
 				{
-					cout << "SDL_image could not initialize! SDL_image Error: " << IMG_GetError();
+					std::cout << "SDL_image could not initialize! SDL_image Error: " << IMG_GetError();
 					success = false;
 				}
 			}
@@ -64,6 +61,46 @@ return "bool" to indicate successful operation or not*/
 	set_running(success);
 }
 
+SDL_Texture* Game::load_image_data(std::string path, bool& allMediaLoaded)
+// ( Called in the loadMedia() method )
+// This loads the texture of the given path, then converts to the texture and returns the pointer to it.
+{
+	SDL_Texture* newTexture = nullptr;
+	std::cout << path << std::endl;
+
+	// load initial surface image
+	SDL_Surface* tempSurface = IMG_Load(path.c_str());
+	if (tempSurface == NULL)
+	{
+		std::cout << path << " failed to load: SDL ERROR: " << IMG_GetError();
+		allMediaLoaded = false;
+	}
+	else
+	{
+		std::cout << "converting";
+		//Convert surface to a texture
+		newTexture = SDL_CreateTextureFromSurface(Game::gRenderer, tempSurface);
+		if (newTexture == NULL)
+		{
+			std::cout << "Unable to create texture " << path << " SDL Error: " << SDL_GetError() << std::endl;
+			allMediaLoaded = false;
+		}
+		//Get rid of old temp loaded surface - VITAL!
+
+		SDL_FreeSurface(tempSurface);
+
+	}
+
+	return newTexture;
+}
+
+SDL_Rect* Game::GetRect(SDL_Texture* texture, int x, int y)
+{
+	int w, h;
+	SDL_QueryTexture(texture, NULL, NULL, &w, &h);
+	SDL_Rect* rect = new SDL_Rect{ x, y, w, h };
+	return rect;
+}
 
 void Game::load_media()
 // Loads media for the game
@@ -72,7 +109,7 @@ void Game::load_media()
 
 	for (int x = 0; x < eImages::TOTAL_IMAGES; x++) // For the amount of the value of the enum "enImages::TOTAL_IMAGES"
 	{
-		game_images[x] = TextureManager::load_image_data(image_path[x], allMediaLoaded);
+		game_images[x] = Game::load_image_data(image_path[x], allMediaLoaded);
 	}
 
 	set_running(allMediaLoaded);
@@ -98,7 +135,7 @@ void Game::splash_screen(const int time_to_display)
 // Displays and delays the splash screen logo
 {
 
-	SDL_RenderCopy(gRenderer, game_images[eImages::SPLASH]->texture, NULL, NULL);
+	SDL_RenderCopy(gRenderer, game_images[eImages::SPLASH], NULL, NULL);
 
 	//Update screen
 	SDL_RenderPresent(gRenderer);
@@ -125,7 +162,7 @@ void Game::handle_input(const double& dt)
 	{
 		if (events.type == SDL_QUIT)
 		{
-			cout << "exit" << endl;
+			std::cout << "exit" << std::endl;
 			set_running(false);
 		}
 
@@ -133,7 +170,7 @@ void Game::handle_input(const double& dt)
 		{
 			switch (events.key.keysym.sym)
 			{
-				cout << "A pressed";
+				std::cout << "A pressed";
 			case SDLK_SPACE:
 				//entities.push_back(std::make_unique<Bullet>(player));
 				break;
@@ -146,8 +183,8 @@ void Game::handle_input(const double& dt)
 	//Uint8* keystates = SDL_GetKeyState(NULL);
 	if (keystates[SDL_SCANCODE_W])
 	{
-		player->vel.x += sin(player->angle * PI / 180) * SHIP_THRUST * dt;
-		player->vel.y += -cos(player->angle * PI / 180) * SHIP_THRUST * dt;
+		player->vel_x += sin(player->angle * PI / 180) * SHIP_THRUST * dt;
+		player->vel_y += -cos(player->angle * PI / 180) * SHIP_THRUST * dt;
 	}
 	if (keystates[SDL_SCANCODE_A])
 	{
@@ -161,11 +198,9 @@ void Game::handle_input(const double& dt)
 	}
 	if (keystates[SDL_SCANCODE_SPACE])
 	{
-		current_shot = SDL_GetTicks();
-		if (current_shot - last_shot > shot_delay)
+		if (shot_delay.Check())
 		{
 			entities.push_back(std::make_unique<Bullet>(player));
-			last_shot = current_shot;
 		}
 	}
 }
@@ -176,16 +211,33 @@ void Game::render()
 	SDL_SetRenderDrawColor(gRenderer, 0, 0, 0, 255);
 	SDL_RenderClear(gRenderer);
 	Draw();
-	//SDL_RenderCopy(gRenderer, menuImages[enImages::BACKGROUND], NULL, NULL);
-	//viewPortRender();
-
-	// Reset viewport to full screen of window
-	//SDL_RenderSetViewport(gRenderer, NULL);
-
-	// render an image at given Rect
-	//SDL_RenderCopy(gRenderer, gImages[eImages::LEFT], gImages[eImages::LEFT], &topRightViewport);
 
 	SDL_RenderPresent(gRenderer);
+}
+
+void Game::CreateAsteroids(int amount, int size, bool isCollidable, bool allowed_near_player)
+{
+	int angle;
+	double x;
+	double y;
+	double vx;
+	double vy;
+	double rand_img;
+
+	for (int i = 0; i < amount; i++)
+	{
+		angle = ((double)rand() / (double)RAND_MAX) * 360;
+		x = (((double)rand() / (double)RAND_MAX)) * Game::SCREEN_WIDTH;;
+		y = (((double)rand() / (double)RAND_MAX)) * Game::SCREEN_HEIGHT;
+		vx = ((double)rand() / (double)RAND_MAX) * 6.283185f;
+		vy = ((double)rand() / (double)RAND_MAX) * 6.283185f;
+		vx = sin(vx) * 125.0;
+		vy = cos(vx) * 125.0;
+
+		rand_img = ((float)rand() / (float)RAND_MAX);
+
+		entities.push_back(std::make_unique<Asteroid>(x, y, vx, vy, angle, size, rand_img, isCollidable));
+	}
 }
 
 
@@ -207,14 +259,14 @@ void Game::exit_game()
 /* Free surfaces and set any pointers to Null before exiting
 IMPORTANT FOR MEMORY USAGE INSIDE PROGRAM */
 {
-	cout << "Cleaning up code";
+	std::cout << "Cleaning up code";
 	SDL_Delay(250);
 
 	int TOTAL = eImages::TOTAL_IMAGES;
 	for (int x = 0; x < TOTAL; x++)
 	{
-		SDL_DestroyTexture(game_images[x]->texture);
-		game_images[x]->texture = nullptr;
+		SDL_DestroyTexture(game_images[x]);
+		game_images[x] = nullptr;
 
 		/*delete game_images[x]->rect;
 		game_images[x]->rect = nullptr;
@@ -236,9 +288,18 @@ Game::Game()
 {
 	this->init();
 	this->load_media();
-	entities.push_back(make_unique<Player>(screen_center.x, screen_center.y));
-	player = entities[0].get();
 
+	entities.reserve(100);
+
+	// create background asteriods
+	CreateAsteroids(15, Asteroid::MEDIUM, false, true);
+	CreateAsteroids(15, Asteroid::LARGE, false, true);
+	CreateAsteroids(15, Asteroid::SMALL, false, true);
+
+	CreateAsteroids(5, Asteroid::LARGE, true, true);
+
+	entities.push_back(std::make_unique<Player>(screen_center_x, screen_center_y));
+	player = entities.back().get();
 }
 
 Game::~Game()
