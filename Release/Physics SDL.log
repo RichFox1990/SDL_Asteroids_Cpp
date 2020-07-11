@@ -1,9 +1,0 @@
-﻿  Game.cpp
-  ImageData.cpp
-  main.cpp
-  TextureManager.cpp
-  Generating code
-  Previous IPDB not found, fall back to full compilation.
-  All 100 functions were compiled because no usable IPDB/IOBJ from previous compilation was found.
-  Finished generating code
-  Physics SDL.vcxproj -> C:\Users\richa\Dropbox\Code\Rich\C++\Physics SDL\Release\Physics SDL.exe
