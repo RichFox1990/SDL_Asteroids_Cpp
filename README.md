@@ -2,8 +2,13 @@
 
 ## Creating a custom Asteroids game using SDL2
 
+### UPDATE 2
+- Game auto grabs screen resolution and uses 70% height and scales the game occordingly.
+- Tidied up code and updated classes/methods to intergrate the scaling algorythmn.
+- Added quick respawn of asteroids after destroying them all (Player pos checks and level progression to add)
+
 ### UPDATE 1
-- Added collision for bulets, player and asteroids (3sec delay before activation at level start)
+- Added collision for bullets, player and asteroids (3sec delay before activation at level start)
 - Change inplemetation of 'CreateAsteroid' function
 - Larger asteroids break into 2 smaller chunks upon bullet collision
 
