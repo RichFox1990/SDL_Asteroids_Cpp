@@ -5,7 +5,7 @@
 class Player : public Entity
 {
 public:
-	Player(double x, double y);
+	Player(double x, double y, float screen_ratio);
 
 	void Draw() override;
 	void Update(double const& dt) override;
@@ -15,6 +15,6 @@ private:
 	//SDL_Texture* rad_img = nullptr;
 	//SDL_Rect* radius_rect;
 	SDL_Texture* img = nullptr;
-	const double MAX_SPEED = 350.0;
+	int MAX_SPEED;
 };
 

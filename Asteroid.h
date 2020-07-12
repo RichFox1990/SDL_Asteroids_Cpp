@@ -4,7 +4,7 @@ class Asteroid : public Entity
 {
 public:
 	double angle_modifier = 0;
-	Asteroid(double x, double y, double vx, double vy, int angle, int asteriod_scale, double rand_img, bool isCollidable);
+	Asteroid(double x, double y, double vx, double vy, int angle, float asteriod_size, double rand_img, bool isCollidable, float screen_ratio);
 
 	void Draw() override;
 	void Update(double const& dt) override;
@@ -18,9 +18,7 @@ public:
 	};
 
 private:
-	//SDL_Texture* rad_img = nullptr;
-	//SDL_Rect* radius_rect = nullptr;
 	SDL_Texture* img = nullptr;
-	const double MAX_SPEED = 350.0;
+	int MAX_SPEED;
 };
 

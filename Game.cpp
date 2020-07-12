@@ -25,6 +25,27 @@ return "bool" to indicate successful operation or not*/
 
 	else
 	{
+		//int display_count = 0, display_index = 0, mode_index = 0;
+		//SDL_DisplayMode mode = { SDL_PIXELFORMAT_UNKNOWN, 0, 0, 0, 0 };
+
+		//if ((display_count = SDL_GetNumVideoDisplays()) < 1) {
+		//	SDL_Log("SDL_GetNumVideoDisplays returned: %i", display_count);
+		//}
+
+		//if (SDL_GetDisplayMode(display_index, mode_index, &mode) != 0) {
+		//	SDL_Log("SDL_GetDisplayMode failed: %s", SDL_GetError());
+		//}
+		//SDL_Log("SDL_GetDisplayMode(0, 0, &mode):\t\t%i bpp\t%i x %i",
+		//	SDL_BITSPERPIXEL(mode.format), mode.w, mode.h);
+
+		// get users resloution
+		SDL_GetDesktopDisplayMode(0, &users_screen);
+		// use 70% of it
+		SCREEN_HEIGHT = users_screen.h * .7;
+		SCREEN_WIDTH = (float)SCREEN_HEIGHT * ((float)ORIG_W / (float)ORIG_H);
+		// Find the ratio of this screen compared to the original fixed values to use as a scaling float number
+		s_r = (float)SCREEN_WIDTH / ORIG_W;
+
 		//Create window
 		gWindow = SDL_CreateWindow("My Game", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, SCREEN_WIDTH, SCREEN_HEIGHT, SDL_WINDOW_SHOWN);
 		if (gWindow == NULL)
@@ -187,7 +208,7 @@ void Game::handle_input(const double& dt)
 	{
 		if (shot_delay.Check())
 		{
-			vec_bullets.push_back(std::make_unique<Bullet>(player.get()));
+			vec_bullets.push_back(std::make_unique<Bullet>(player.get(), s_r));
 		}
 	}
 }
@@ -202,7 +223,7 @@ void Game::render()
 	SDL_RenderPresent(gRenderer);
 }
 
-void Game::CreateAsteroid(double x, double y, int size, bool isCollidable, bool allowed_near_player, std::vector<std::unique_ptr<Entity>>& vector)
+void Game::CreateAsteroid(double x, double y, float size, bool isCollidable, bool allowed_near_player, std::vector<std::unique_ptr<Entity>>& vector, float s_r)
 {
 	int angle;
 	double vx;
@@ -217,7 +238,7 @@ void Game::CreateAsteroid(double x, double y, int size, bool isCollidable, bool 
 
 	rand_img = ((float)rand() / (float)RAND_MAX);
 
-	vector.push_back(std::make_unique<Asteroid>(x, y, vx, vy, angle, size, rand_img, isCollidable));
+	vector.push_back(std::make_unique<Asteroid>(x, y, vx, vy, angle, size, rand_img, isCollidable, s_r));
 }
 
 
@@ -225,7 +246,7 @@ void Game::Update(const double& dt)
 // Main object update loop for the game
 {
 	player->Update(dt);
-	player->WrapCoords();
+	player->WrapCoords(SCREEN_WIDTH, SCREEN_HEIGHT);
 
 	if (vec_asteroids.size() != 0)
 	{
@@ -240,7 +261,7 @@ void Game::Update(const double& dt)
 				}
 			}
 			ast->Update(dt);
-			ast->WrapCoords();
+			ast->WrapCoords(SCREEN_WIDTH, SCREEN_HEIGHT);
 		}
 	}
 
@@ -265,26 +286,22 @@ void Game::Update(const double& dt)
 						{
 							bul->is_dead = true;
 							ast->is_dead = true;
-							if (ast->size > 2)
+							if (ast->size > Asteroid::SMALL)
 							{
 								for (int i = 0; i < 2; i++)
-									CreateAsteroid(ast->pos_x, ast->pos_y, ast->size - 2, true, true, vec_tempAsteroids);
+									CreateAsteroid(ast->pos_x, ast->pos_y, ast->size - 2.0f, true, true, vec_tempAsteroids, s_r);
 							}
 						}
 					}
 				}
 				bul->Update(dt);
-				bul->WrapCoords();
+				bul->WrapCoords(SCREEN_WIDTH, SCREEN_HEIGHT);
 			}
 		}
 		// merge the new spawned asteroids into the main vector
 		if (vec_tempAsteroids.size() != 0)
 		{
 			std::move(std::begin(vec_tempAsteroids), std::end(vec_tempAsteroids), std::back_inserter(vec_asteroids));
-			/*for (auto& n_ast : vec_tempAsteroids)
-			{
-				vec_asteroids.push_back(n_ast);
-			}*/
 		}
 	}
 
@@ -299,7 +316,7 @@ void Game::Update(const double& dt)
 		{
 			x = (((double)rand() / (double)RAND_MAX)) * Game::SCREEN_WIDTH;;
 			y = (((double)rand() / (double)RAND_MAX)) * Game::SCREEN_HEIGHT;
-			CreateAsteroid(x, y, Asteroid::LARGE, true, true, vec_asteroids);
+			CreateAsteroid(x, y, Asteroid::LARGE, true, true, vec_asteroids, s_r);
 		}
 	}
 }
@@ -340,12 +357,6 @@ IMPORTANT FOR MEMORY USAGE INSIDE PROGRAM */
 	{
 		SDL_DestroyTexture(game_images[x]);
 		game_images[x] = nullptr;
-
-		/*delete game_images[x]->rect;
-		game_images[x]->rect = nullptr;
-
-		delete gImages[x];
-		gImages[x] = nullptr;*/
 	}
 	// Destroy Window and set pointer to NULL
 	SDL_DestroyWindow(gWindow);
@@ -362,6 +373,11 @@ Game::Game()
 	this->init();
 	this->load_media();
 
+	SHIP_THRUST = 750 * s_r;
+	smallest_asteroid = 2 * s_r;
+	screen_center_x = SCREEN_WIDTH / 2;
+	screen_center_y = SCREEN_HEIGHT / 2;
+
 	vec_asteroids.reserve(60);
 	vec_bullets.reserve(20);
 
@@ -371,24 +387,25 @@ Game::Game()
 	{
 		x = (((double)rand() / (double)RAND_MAX)) * Game::SCREEN_WIDTH;;
 		y = (((double)rand() / (double)RAND_MAX)) * Game::SCREEN_HEIGHT;
-		CreateAsteroid(x, y, Asteroid::SMALL, false, true, vec_asteroids);
+		CreateAsteroid(x, y, Asteroid::SMALL-1, false, true, vec_asteroids, s_r);
 
 		x = (((double)rand() / (double)RAND_MAX)) * Game::SCREEN_WIDTH;;
 		y = (((double)rand() / (double)RAND_MAX)) * Game::SCREEN_HEIGHT;
-		CreateAsteroid(x, y, Asteroid::MEDIUM, false, true, vec_asteroids);
+		CreateAsteroid(x, y, Asteroid::MEDIUM-1, false, true, vec_asteroids, s_r);
 
 		x = (((double)rand() / (double)RAND_MAX)) * Game::SCREEN_WIDTH;;
 		y = (((double)rand() / (double)RAND_MAX)) * Game::SCREEN_HEIGHT;
-		CreateAsteroid(x, y, Asteroid::LARGE, false, true, vec_asteroids);
+		CreateAsteroid(x, y, Asteroid::LARGE-1, false, true, vec_asteroids, s_r);
 	}
-
+	// Create main asteroids
 	for (int i = 0; i < 5; i++)
 	{
 		x = (((double)rand() / (double)RAND_MAX)) * Game::SCREEN_WIDTH;;
 		y = (((double)rand() / (double)RAND_MAX)) * Game::SCREEN_HEIGHT;
-		CreateAsteroid(x, y, Asteroid::LARGE, true, true, vec_asteroids);
+		CreateAsteroid(x, y, Asteroid::LARGE, true, true, vec_asteroids, s_r);
 	}
-	player = std::make_unique<Player>(screen_center_x, screen_center_y);
+	// create player
+	player = std::make_unique<Player>(screen_center_x, screen_center_y, s_r);
 }
 
 Game::~Game()

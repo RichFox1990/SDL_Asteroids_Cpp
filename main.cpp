@@ -9,7 +9,6 @@ int main(int argc, char* argv[])
 	do
 	{
 		Game game{}; // initialize an object of the Game class
-		//game.set_running(true);
 
 		const int FPS = 60;
 		double frame_delay = 1000.0 / FPS;

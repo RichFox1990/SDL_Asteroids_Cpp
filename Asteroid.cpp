@@ -2,8 +2,9 @@
 #include "Game.h"
 #include "stdlib.h"
 
-Asteroid::Asteroid(double x, double y, double vx, double vy, int angle, int size, double rand_img, bool isCollidable)
+Asteroid::Asteroid(double x, double y, double vx, double vy, int angle, float size, double rand_img, bool isCollidable, float s_r)
 {
+	MAX_SPEED = 350.0 * s_r;
 	//set position and velocity
 	pos_x = x;
 	pos_y = y;
@@ -32,13 +33,13 @@ Asteroid::Asteroid(double x, double y, double vx, double vy, int angle, int size
 	if (isCollidable) // If its not just for the background
 	{
 		this->size = size;
-		rect->w *= size;
-		rect->h *= size;
+		rect->w *= size * s_r;
+		rect->h *= size * s_r;
 		angle_modifier = (((double)rand() / (double)RAND_MAX) * 200.0) + 20.0;
 	}
 	else // if its background asteroid
 	{
-		size += 2;
+		size = (size/s_r) + (2/s_r);
 		rect->w /= size;
 		rect->h /= size;
 		angle_modifier = 0; // no need to waste resources altering angle each frame for tiny background entities
@@ -47,17 +48,9 @@ Asteroid::Asteroid(double x, double y, double vx, double vy, int angle, int size
 	width = rect->w;
 	height = rect->h;
 
-	radius = (rect->h * .5)*.9;
+	radius = (rect->h * .5)*.85;
 	center.x = rect->w * .5;
 	center.y = rect->h * .5;
-
-	//rad_img = Game::game_images[Game::eImages::CIRCLE];
-	//radius_rect = Game::GetRect(rad_img, pos_x, pos_y);
-	//double orig_w = radius_rect->w;
-	//radius_rect->w *= ((double)width / orig_w)*.9;
-	//radius_rect->h *= ((double)width / orig_w)*.9;
-
-	//angle_modifier = (((double)rand() / (double)RAND_MAX) * 200.0) + 20.0;
 }
 
 
@@ -73,8 +66,6 @@ void Asteroid::Update(double const& dt)
 	{
 		angle += angle_modifier * dt;
 		angle = angle % 360;
-		//radius_rect->x = pos_x + center.x - radius_rect->w / 2;
-		//radius_rect->y = pos_y + center.y - radius_rect->h / 2;
 	}
 }
 
@@ -84,8 +75,6 @@ void Asteroid::Draw()
 
 	if (isCollidable)
 	{
-		//SDL_SetTextureColorMod(rad_img, 255, 0, 0);
-		//SDL_RenderCopy(Game::gRenderer, rad_img, NULL, radius_rect);
 		SDL_SetTextureColorMod(img, 153, 153, 0);
 		SDL_RenderCopyEx(Game::gRenderer, img, NULL, rect, angle, &center, SDL_FLIP_NONE);
 	}

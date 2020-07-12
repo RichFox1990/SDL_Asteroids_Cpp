@@ -4,10 +4,19 @@
 class Entity
 {
 public:
+	Entity() {}
+	virtual ~Entity() {};
+	// Methods
+	virtual bool Collision(Entity& other_entity);
+	virtual void WrapCoords(int screen_width, int screen_height);
+	virtual void Update(double const& dt) = 0;
+	virtual void Draw() = 0;
+
+	//Variables
 	int angle = 0;
 	int width = 0;
 	int height = 0;
-	int size = 0; // used for asteroids
+	float size = 0.0f; // used for asteroids
 
 	bool is_dead = false;
 	bool isCollidable = true;
@@ -21,14 +30,6 @@ public:
 
 	SDL_Point center{ 0, 0 };
 	SDL_Rect* rect = nullptr;
-
-	Entity() {}
-
-	virtual ~Entity() {};
-	virtual bool Collision(Entity& other_entity);
-	virtual void WrapCoords();
-	virtual void Update(double const& dt) = 0;
-	virtual void Draw() = 0;
 
 };
 

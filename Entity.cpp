@@ -1,11 +1,8 @@
 #include "Entity.h"
 #include "Game.h"
 
-void Entity::WrapCoords()
+void Entity::WrapCoords(int sw, int sh)
 {
-	int sw = Game::SCREEN_WIDTH;
-	int sh = Game::SCREEN_HEIGHT;
-
 	if (pos_x < 0.0 - width)
 	{
 		pos_x += sw + (double)width;

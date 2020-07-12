@@ -85,11 +85,15 @@
     <LinkIncremental>true</LinkIncremental>
     <IncludePath>C:\Dev\SDL2_image-2.0.5\include;C:\Dev\SDL2\include;$(IncludePath)</IncludePath>
     <LibraryPath>C:\Dev\SDL2_image-2.0.5\lib\x64;C:\Dev\SDL2\lib\x64;$(LibraryPath)</LibraryPath>
+    <OutDir>$(SolutionDir)$(Platform)\$(Configuration)\</OutDir>
+    <IntDir>$(Platform)\$(Configuration)\</IntDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <LinkIncremental>false</LinkIncremental>
     <IncludePath>C:\Dev\SDL2_image-2.0.5\include;C:\Dev\SDL2\include;$(IncludePath)</IncludePath>
     <LibraryPath>C:\Dev\SDL2_image-2.0.5\lib\x64;C:\Dev\SDL2\lib\x64;$(LibraryPath)</LibraryPath>
+    <OutDir>$(SolutionDir)$(Platform)\$(Configuration)\</OutDir>
+    <IntDir>$(Platform)\$(Configuration)\</IntDir>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>

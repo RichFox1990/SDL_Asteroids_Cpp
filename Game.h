@@ -11,41 +11,19 @@ class Game {
 public:
 	Game();
 	~Game();
+
 	// Methods
-	void init();
-	SDL_Texture* load_image_data(std::string path, bool& allMediaLoaded);
 	static SDL_Rect* GetRect(SDL_Texture* texture, int x, int y);
-	void load_media();
+	static SDL_Event events;
+	static SDL_Renderer* gRenderer;
+
 	void splash_screen(const int time_to_display);
-	void exit_game();
-	void set_running(const bool new_bool);
-	bool is_running();
-
-	void CreateAsteroid(double x, double y, int size, bool isCollidable, bool allowed_near_player, std::vector<std::unique_ptr<Entity>>& vector);
-
-	void Draw();
-
 	void Update(const double& delta_time);
 	void handle_input(const double& delta_time);
 	void render();
 
-	// Variables
-
-	static const int SCREEN_HEIGHT = 620 * 1.5;
-	static const int SCREEN_WIDTH = 900 * 1.5;
-	int screen_center_x = SCREEN_WIDTH / 2;
-	int screen_center_y = SCREEN_HEIGHT / 2;
-
-	const int SHIP_THRUST = 750;
-	const int ANGLE_MODIFIER = 350;
-
-	DelayTimer shot_delay{ 250.0f };
-
-	DelayTimer collision_delay{ 3000.0f };
-
-	std::vector<std::unique_ptr<Entity>> vec_asteroids;
-	std::vector<std::unique_ptr<Entity>> vec_bullets;
-
+	bool is_running();
+	void set_running(const bool new_bool);
 
 	// Enum reference for gImages array of textures
 	struct eImages
@@ -61,6 +39,8 @@ public:
 		};
 	};
 
+	static SDL_Texture* game_images[eImages::TOTAL_IMAGES]; // array of pointers to Textures created (unreferenced by enImages enumerator)
+
 	std::string image_path[eImages::TOTAL_IMAGES]
 	{
 		"images/splash_image.png",
@@ -70,15 +50,37 @@ public:
 		"images/circle.png",
 	};
 
-	static SDL_Event events;
-
-	static SDL_Renderer* gRenderer;
-
-	static SDL_Texture* game_images[eImages::TOTAL_IMAGES]; // array of pointers to Textures created (unreferenced by enImages enumerator)
-
-
 private:
+	void init();
+	void load_media();
+	void exit_game();
+	void CreateAsteroid(double x, double y, float size, bool isCollidable, bool allowed_near_player, std::vector<std::unique_ptr<Entity>>& vector, float screen_ratio);
+	void Draw();
+
+	const int ORIG_H = 930;
+	const int ORIG_W = 1350;
+	SDL_DisplayMode users_screen;
+
+	int SCREEN_HEIGHT;
+	int SCREEN_WIDTH;
+	float s_r;
+
+	int screen_center_x;
+	int screen_center_y;
+
+	int SHIP_THRUST;
+	const int ANGLE_MODIFIER = 350;
+
+	DelayTimer shot_delay{ 200.0f };
+	DelayTimer collision_delay{ 3000.0f };
+
+	std::vector<std::unique_ptr<Entity>> vec_asteroids;
+	std::vector<std::unique_ptr<Entity>> vec_bullets;
+
 	bool running = true;
+	float smallest_asteroid;
+
+	SDL_Texture* load_image_data(std::string path, bool& allMediaLoaded);
 	SDL_Window* gWindow = nullptr;
 	std::unique_ptr<Entity> player;
 };

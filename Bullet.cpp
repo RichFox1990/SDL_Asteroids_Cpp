@@ -2,14 +2,15 @@
 #include "Game.h"
 
 
-Bullet::Bullet(Entity* player)
+Bullet::Bullet(Entity* player, float s_r)
 {
+	MAX_SPEED = 1200.0 * s_r;
 	angle = player->angle;
 	pos_x = sin((double)angle * PI / 180.0) * player->height / 4 + player->rect->x + player->width / 2;
 	pos_y = -cos((double)angle * PI / 180.0) * player->height / 4 + player->rect->y + player->height / 2;
 
-	// bullet rect (4x4)
-	rect = new SDL_Rect{ (int)pos_x, (int)pos_y, 5, 5 };
+	// bullet rect (5x5)
+	rect = new SDL_Rect{ (int)pos_x, (int)pos_y, (int)(5.0 * s_r), (int)(5.0 * s_r) };
 	width = rect->w;
 	height = rect->h;
 	// set bullet velocity
@@ -21,13 +22,13 @@ Bullet::Bullet(Entity* player)
 	center.y = rect->h * .5;
 }
 
-void Bullet::WrapCoords()
+void Bullet::WrapCoords(int sw, int sh)
 {
 	if (pos_x < 0.0 - width)
 	{
 		is_dead = true;
 	}
-	if (pos_x > Game::SCREEN_WIDTH)
+	if (pos_x > sw)
 	{
 		is_dead = true;
 	}
@@ -35,7 +36,7 @@ void Bullet::WrapCoords()
 	{
 		is_dead = true;
 	}
-	if (pos_y > Game::SCREEN_HEIGHT)
+	if (pos_y > sh)
 	{
 		is_dead = true;
 	}

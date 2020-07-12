@@ -4,13 +4,13 @@ class Bullet : public Entity
 {
 public:
 
-	Bullet(Entity* player);
-	void WrapCoords();
+	Bullet(Entity* player, float s_r);
+	void WrapCoords(int screen_width, int screen_height);
 	void Draw() override;
 	void Update(double const& dt) override;
 	~Bullet();
 
 private:
-	const int MAX_SPEED = 1200;
+	int MAX_SPEED;
 };
 
