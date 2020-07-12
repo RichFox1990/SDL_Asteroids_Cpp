@@ -2,6 +2,11 @@
 
 ## Creating a custom Asteroids game using SDL2
 
+### UPDATE 3
+- Added high score.txt that keeps track of your highest 3 scores
+- Added Score display to screen
+- Added Spawning protection around player when spawning new asteroids. 
+
 ### UPDATE 2
 - Game auto grabs screen resolution and uses 70% height and scales the game occordingly.
 - Tidied up code and updated classes/methods to intergrate the scaling algorythmn.
@@ -20,6 +25,6 @@
 ### ONGOING PROJECT
 #### Upcoming
 - Collision - DONE
-- Score system
+- Score system - intially DONE
 - Wave/levels
 - Menus

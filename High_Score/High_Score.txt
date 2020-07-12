@@ -1,0 +1,3 @@
+Richard: 10200
+Richard: 5500
+rich: 2100

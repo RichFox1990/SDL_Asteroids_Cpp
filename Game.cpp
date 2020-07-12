@@ -3,6 +3,7 @@
 #include "Bullet.h"
 #include <SDL_image.h>
 
+
 SDL_Event Game::events;
 
 SDL_Texture* Game::game_images[eImages::TOTAL_IMAGES];
@@ -25,19 +26,6 @@ return "bool" to indicate successful operation or not*/
 
 	else
 	{
-		//int display_count = 0, display_index = 0, mode_index = 0;
-		//SDL_DisplayMode mode = { SDL_PIXELFORMAT_UNKNOWN, 0, 0, 0, 0 };
-
-		//if ((display_count = SDL_GetNumVideoDisplays()) < 1) {
-		//	SDL_Log("SDL_GetNumVideoDisplays returned: %i", display_count);
-		//}
-
-		//if (SDL_GetDisplayMode(display_index, mode_index, &mode) != 0) {
-		//	SDL_Log("SDL_GetDisplayMode failed: %s", SDL_GetError());
-		//}
-		//SDL_Log("SDL_GetDisplayMode(0, 0, &mode):\t\t%i bpp\t%i x %i",
-		//	SDL_BITSPERPIXEL(mode.format), mode.w, mode.h);
-
 		// get users resloution
 		SDL_GetDesktopDisplayMode(0, &users_screen);
 		// use 70% of it
@@ -75,6 +63,15 @@ return "bool" to indicate successful operation or not*/
 				{
 					std::cout << "SDL_image could not initialize! SDL_image Error: " << IMG_GetError();
 					success = false;
+				}
+				else
+				{
+					//Initialize SDL_ttf
+					if (TTF_Init() == -1)
+					{
+						printf("SDL_ttf could not initialize! SDL_ttf Error: %s\n", TTF_GetError());
+						success = false;
+					}
 				}
 			}
 		}
@@ -115,6 +112,7 @@ SDL_Texture* Game::load_image_data(std::string path, bool& allMediaLoaded)
 	return newTexture;
 }
 
+
 SDL_Rect* Game::GetRect(SDL_Texture* texture, int x, int y)
 {
 	int w, h;
@@ -122,6 +120,40 @@ SDL_Rect* Game::GetRect(SDL_Texture* texture, int x, int y)
 	SDL_Rect* rect = new SDL_Rect{ x, y, w, h };
 	return rect;
 }
+
+
+SDL_Texture* Game::LoadRenderedText(std::string textureText, SDL_Color textColor)
+{
+	SDL_Texture* temp = nullptr;
+	//Render text surface
+	SDL_Surface* textSurface = TTF_RenderText_Solid(gFont, textureText.c_str(), textColor);
+	if (textSurface == NULL)
+	{
+		printf("Unable to render text surface! SDL_ttf Error: %s\n", TTF_GetError());
+	}
+	else
+	{
+		//Create texture from surface pixels
+		temp = SDL_CreateTextureFromSurface(gRenderer, textSurface);
+		if (temp == NULL)
+		{
+			printf("Unable to create texture from rendered text! SDL Error: %s\n", SDL_GetError());
+		}
+		else
+		{
+			if (score_rect == nullptr)
+			{
+				score_rect = new SDL_Rect{ 0, 0, textSurface->w, textSurface->h };
+			}
+		}
+
+		//Get rid of old surface
+		SDL_FreeSurface(textSurface);
+	}
+
+	return temp;
+}
+
 
 void Game::load_media()
 // Loads media for the game
@@ -131,6 +163,14 @@ void Game::load_media()
 	for (int x = 0; x < eImages::TOTAL_IMAGES; x++) // For the amount of the value of the enum "enImages::TOTAL_IMAGES"
 	{
 		game_images[x] = Game::load_image_data(image_path[x], allMediaLoaded);
+	}
+
+	//Open the font
+	gFont = TTF_OpenFont("Fonts/Asteroid.ttf", FONT_SIZE);
+	if (gFont == NULL)
+	{
+		printf("Failed to load lazy font! SDL_ttf Error: %s\n", TTF_GetError());
+		allMediaLoaded = false;
 	}
 
 	set_running(allMediaLoaded);
@@ -189,17 +229,17 @@ void Game::handle_input(const double& dt)
 	const Uint8* keystates = SDL_GetKeyboardState(NULL);
 	//Get the keystates
 	//Uint8* keystates = SDL_GetKeyState(NULL);
-	if (keystates[SDL_SCANCODE_W])
+	if (keystates[SDL_SCANCODE_W] || keystates[SDL_SCANCODE_UP])
 	{
 		player->vel_x += sin(player->angle * PI / 180) * SHIP_THRUST * dt;
 		player->vel_y += -cos(player->angle * PI / 180) * SHIP_THRUST * dt;
 	}
-	if (keystates[SDL_SCANCODE_A])
+	if (keystates[SDL_SCANCODE_A] || keystates[SDL_SCANCODE_LEFT])
 	{
 		player->angle -= ANGLE_MODIFIER * dt;
 		player->angle = player->angle % 360;
 	}
-	if (keystates[SDL_SCANCODE_D])
+	if (keystates[SDL_SCANCODE_D] || keystates[SDL_SCANCODE_RIGHT])
 	{
 		player->angle += ANGLE_MODIFIER * dt;
 		player->angle = player->angle % 360;
@@ -219,7 +259,7 @@ void Game::render()
 	SDL_SetRenderDrawColor(gRenderer, 0, 0, 0, 255);
 	SDL_RenderClear(gRenderer);
 	Draw();
-
+	SDL_RenderCopy(Game::gRenderer, gScore, NULL, score_rect);
 	SDL_RenderPresent(gRenderer);
 }
 
@@ -238,7 +278,22 @@ void Game::CreateAsteroid(double x, double y, float size, bool isCollidable, boo
 
 	rand_img = ((float)rand() / (float)RAND_MAX);
 
+	Asteroid temp(x, y, vx, vy, angle, size, rand_img, isCollidable, s_r);
+	temp.radius *= 5;
+	if (!allowed_near_player)
+	{
+		while (player->Collision(temp))
+		{
+			vx < 0 ? temp.pos_x -= 10 : temp.pos_x += 10;
+			vy < 0 ? temp.pos_y += 10 : temp.pos_y -= 10;
+			std::cout << "Spawn Collision detected!!" << std::endl;
+		}
+		x = temp.pos_x;
+		y = temp.pos_y;
+	}
+
 	vector.push_back(std::make_unique<Asteroid>(x, y, vx, vy, angle, size, rand_img, isCollidable, s_r));
+
 }
 
 
@@ -257,6 +312,18 @@ void Game::Update(const double& dt)
 				if ((player->Collision(*ast)) && (collision_delay.Check()))
 				{
 					//std::cout << "COLLISION PLAYER" << std::endl;
+					if (score > high_score.top3[2].second)
+					{
+						std::string name;
+						std::cout << "\nYou scored in the top 3. Please type your name(no spaces): " << std::endl;
+						std::cin >> name;
+						high_score.PushScore(name, score);
+						high_score.Print();
+					}
+					else
+					{
+						std::cout << "\nYou didn't score in the top 3. Better luck next time\n" << std::endl;
+					}
 					set_running(false);
 				}
 			}
@@ -286,6 +353,9 @@ void Game::Update(const double& dt)
 						{
 							bul->is_dead = true;
 							ast->is_dead = true;
+							score += 100;
+							gScore = LoadRenderedText("SCORE: " + std::to_string(score), gtext_color);
+
 							if (ast->size > Asteroid::SMALL)
 							{
 								for (int i = 0; i < 2; i++)
@@ -316,7 +386,7 @@ void Game::Update(const double& dt)
 		{
 			x = (((double)rand() / (double)RAND_MAX)) * Game::SCREEN_WIDTH;;
 			y = (((double)rand() / (double)RAND_MAX)) * Game::SCREEN_HEIGHT;
-			CreateAsteroid(x, y, Asteroid::LARGE, true, true, vec_asteroids, s_r);
+			CreateAsteroid(x, y, Asteroid::LARGE, true, false, vec_asteroids, s_r);
 		}
 	}
 }
@@ -364,13 +434,20 @@ IMPORTANT FOR MEMORY USAGE INSIDE PROGRAM */
 	SDL_DestroyRenderer(gRenderer);
 	gRenderer = nullptr;
 
+	//Free global font
+	TTF_CloseFont(gFont);
+	gFont = nullptr;
+
 	IMG_Quit();
+	TTF_Quit();
 	SDL_Quit();
 }
 
 Game::Game()
 {
+
 	this->init();
+	FONT_SIZE = 50.0 * s_r;
 	this->load_media();
 
 	SHIP_THRUST = 750 * s_r;
@@ -397,15 +474,22 @@ Game::Game()
 		y = (((double)rand() / (double)RAND_MAX)) * Game::SCREEN_HEIGHT;
 		CreateAsteroid(x, y, Asteroid::LARGE-1, false, true, vec_asteroids, s_r);
 	}
+
+	// create player
+	player = std::make_unique<Player>(screen_center_x, screen_center_y, s_r);
+
 	// Create main asteroids
 	for (int i = 0; i < 5; i++)
 	{
 		x = (((double)rand() / (double)RAND_MAX)) * Game::SCREEN_WIDTH;;
 		y = (((double)rand() / (double)RAND_MAX)) * Game::SCREEN_HEIGHT;
-		CreateAsteroid(x, y, Asteroid::LARGE, true, true, vec_asteroids, s_r);
+		CreateAsteroid(x, y, Asteroid::LARGE, true, false, vec_asteroids, s_r);
 	}
-	// create player
-	player = std::make_unique<Player>(screen_center_x, screen_center_y, s_r);
+
+
+	gScore = LoadRenderedText("SCORE: " + std::to_string(score), gtext_color);
+	score_rect->x = SCREEN_WIDTH/2 - score_rect->w / 2;
+	score_rect->y += 10 * s_r;;
 }
 
 Game::~Game()

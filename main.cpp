@@ -1,7 +1,5 @@
 #include "Game.h"
 
-using namespace std;
-
 int main(int argc, char* argv[])
 {
 	char again;
@@ -20,8 +18,10 @@ int main(int argc, char* argv[])
 		if (game.is_running())
 		{
 			game.splash_screen(1);
-			cout << "Welcome";
+			std::cout << "Welcome\n\n";
 		}
+
+		game.high_score.Print();
 
 		while (game.is_running())
 		{
@@ -42,8 +42,6 @@ int main(int argc, char* argv[])
 			{
 				delta_time = frame_time / 1000.0;
 			}
-
-			//std::cout << "DT: " << delta_time << " || FT: " << frame_time/1000.0 << std::endl;
 		}
 
 		std::cout << "\n\nDo you want to play again? (y/n): ";

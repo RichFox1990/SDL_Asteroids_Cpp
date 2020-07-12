@@ -1,9 +1,12 @@
 #pragma once
 #include <iostream>
+#include <string>
 #include "SDL.h"
 #include <vector>
 #include "Player.h"
 #include "DelayTimer.h"
+#include "HighScore.h"
+#include <SDL_ttf.h>
 
 static const double PI = 3.14159265;
 
@@ -16,6 +19,9 @@ public:
 	static SDL_Rect* GetRect(SDL_Texture* texture, int x, int y);
 	static SDL_Event events;
 	static SDL_Renderer* gRenderer;
+	HighScore high_score{};
+	//Globally used font
+	TTF_Font* gFont = nullptr;
 
 	void splash_screen(const int time_to_display);
 	void Update(const double& delta_time);
@@ -57,12 +63,15 @@ private:
 	void CreateAsteroid(double x, double y, float size, bool isCollidable, bool allowed_near_player, std::vector<std::unique_ptr<Entity>>& vector, float screen_ratio);
 	void Draw();
 
+	int score = 0;
+
 	const int ORIG_H = 930;
 	const int ORIG_W = 1350;
 	SDL_DisplayMode users_screen;
 
 	int SCREEN_HEIGHT;
 	int SCREEN_WIDTH;
+	int FONT_SIZE;
 	float s_r;
 
 	int screen_center_x;
@@ -80,7 +89,12 @@ private:
 	bool running = true;
 	float smallest_asteroid;
 
+	SDL_Color gtext_color = { 255, 255, 255 };
+	SDL_Texture* LoadRenderedText(std::string textureText, SDL_Color textColor);
 	SDL_Texture* load_image_data(std::string path, bool& allMediaLoaded);
+
+	SDL_Texture* gScore = nullptr;
+	SDL_Rect* score_rect = nullptr;
 	SDL_Window* gWindow = nullptr;
 	std::unique_ptr<Entity> player;
 };
