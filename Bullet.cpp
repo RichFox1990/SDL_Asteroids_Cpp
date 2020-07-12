@@ -15,6 +15,10 @@ Bullet::Bullet(Entity* player)
 	// set bullet velocity
 	vel_x = sin((double)angle * PI / 180.0) * MAX_SPEED;
 	vel_y = -cos((double)angle * PI / 180.0) * MAX_SPEED;
+
+	radius = rect->h * .5;
+	center.x = rect->w * .5;
+	center.y = rect->h * .5;
 }
 
 void Bullet::WrapCoords()
@@ -54,7 +58,7 @@ void Bullet::Draw()
 
 Bullet::~Bullet()
 {
-	std::cout << "deleted Bullet" << std::endl;
+	//std::cout << "deleted Bullet" << std::endl;
 	delete rect;
 	rect = nullptr;
 }

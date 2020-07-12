@@ -21,7 +21,7 @@ public:
 	void set_running(const bool new_bool);
 	bool is_running();
 
-	void CreateAsteroids(int amount, int size, bool isCollidable, bool allowed_near_player);
+	void CreateAsteroid(double x, double y, int size, bool isCollidable, bool allowed_near_player, std::vector<std::unique_ptr<Entity>>& vector);
 
 	void Draw();
 
@@ -41,6 +41,12 @@ public:
 
 	DelayTimer shot_delay{ 250.0f };
 
+	DelayTimer collision_delay{ 3000.0f };
+
+	std::vector<std::unique_ptr<Entity>> vec_asteroids;
+	std::vector<std::unique_ptr<Entity>> vec_bullets;
+
+
 	// Enum reference for gImages array of textures
 	struct eImages
 	{
@@ -50,6 +56,7 @@ public:
 			SHIP,
 			ASTEROID1,
 			ASTEROID2,
+			CIRCLE,
 			TOTAL_IMAGES
 		};
 	};
@@ -60,6 +67,7 @@ public:
 		"images/ship.png",
 		"images/astroid1.png",
 		"images/astroid2.png",
+		"images/circle.png",
 	};
 
 	static SDL_Event events;
@@ -72,6 +80,5 @@ public:
 private:
 	bool running = true;
 	SDL_Window* gWindow = nullptr;
-	Entity* player;
-	std::vector<std::unique_ptr<Entity>> entities;
+	std::unique_ptr<Entity> player;
 };

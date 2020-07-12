@@ -11,6 +11,6 @@ public:
 	~Bullet();
 
 private:
-	const int MAX_SPEED = 800;
+	const int MAX_SPEED = 1200;
 };
 

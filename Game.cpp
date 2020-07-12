@@ -143,19 +143,6 @@ void Game::splash_screen(const int time_to_display)
 }
 
 
-void Game::Draw()
-// Draws the various shapes onto the screen
-{
-	if (entities.size() != 0)
-	{
-		for (auto& ent : entities)
-		{
-			ent->Draw();
-		}
-	}
-}
-
-
 void Game::handle_input(const double& dt)
 {
 	while (SDL_PollEvent(&events) != 0)
@@ -200,7 +187,7 @@ void Game::handle_input(const double& dt)
 	{
 		if (shot_delay.Check())
 		{
-			entities.push_back(std::make_unique<Bullet>(player));
+			vec_bullets.push_back(std::make_unique<Bullet>(player.get()));
 		}
 	}
 }
@@ -215,43 +202,129 @@ void Game::render()
 	SDL_RenderPresent(gRenderer);
 }
 
-void Game::CreateAsteroids(int amount, int size, bool isCollidable, bool allowed_near_player)
+void Game::CreateAsteroid(double x, double y, int size, bool isCollidable, bool allowed_near_player, std::vector<std::unique_ptr<Entity>>& vector)
 {
 	int angle;
-	double x;
-	double y;
 	double vx;
 	double vy;
 	double rand_img;
 
-	for (int i = 0; i < amount; i++)
-	{
-		angle = ((double)rand() / (double)RAND_MAX) * 360;
-		x = (((double)rand() / (double)RAND_MAX)) * Game::SCREEN_WIDTH;;
-		y = (((double)rand() / (double)RAND_MAX)) * Game::SCREEN_HEIGHT;
-		vx = ((double)rand() / (double)RAND_MAX) * 6.283185f;
-		vy = ((double)rand() / (double)RAND_MAX) * 6.283185f;
-		vx = sin(vx) * 125.0;
-		vy = cos(vx) * 125.0;
+	angle = ((double)rand() / (double)RAND_MAX) * 360;
+	vx = ((double)rand() / (double)RAND_MAX) * 6.283185f;
+	vy = ((double)rand() / (double)RAND_MAX) * 6.283185f;
+	vx = sin(vx) * 125.0;
+	vy = cos(vx) * 125.0;
 
-		rand_img = ((float)rand() / (float)RAND_MAX);
+	rand_img = ((float)rand() / (float)RAND_MAX);
 
-		entities.push_back(std::make_unique<Asteroid>(x, y, vx, vy, angle, size, rand_img, isCollidable));
-	}
+	vector.push_back(std::make_unique<Asteroid>(x, y, vx, vy, angle, size, rand_img, isCollidable));
 }
 
 
 void Game::Update(const double& dt)
 // Main object update loop for the game
 {
-	for (auto& ent : entities)
+	player->Update(dt);
+	player->WrapCoords();
+
+	if (vec_asteroids.size() != 0)
 	{
-		ent->Update(dt);
-		ent->WrapCoords();
+		for (auto& ast : vec_asteroids)
+		{
+			if (ast->isCollidable)
+			{
+				if ((player->Collision(*ast)) && (collision_delay.Check()))
+				{
+					//std::cout << "COLLISION PLAYER" << std::endl;
+					set_running(false);
+				}
+			}
+			ast->Update(dt);
+			ast->WrapCoords();
+		}
 	}
 
-	// I entity is marked as dead, remove them
-	entities.erase(std::remove_if(entities.begin(), entities.end(), [](std::unique_ptr<Entity>& e) { return (e->is_dead); }), entities.end());
+
+	if (vec_bullets.size() != 0)
+	{
+		// create temp vector to store any newly spawned asteroids (so we dont crash the vector we are iterating over)
+		std::vector<std::unique_ptr<Entity>> vec_tempAsteroids;
+
+		//loop through bullets
+		for (auto& bul : vec_bullets)
+		{
+			// for each bullet check collision with all collidable asteroids
+			if (vec_asteroids.size() != 0)
+			{
+				for (auto& ast : vec_asteroids)
+				{
+					if (ast->isCollidable)
+					{
+						// if collision
+						if (bul->Collision(*ast)) 
+						{
+							bul->is_dead = true;
+							ast->is_dead = true;
+							if (ast->size > 2)
+							{
+								for (int i = 0; i < 2; i++)
+									CreateAsteroid(ast->pos_x, ast->pos_y, ast->size - 2, true, true, vec_tempAsteroids);
+							}
+						}
+					}
+				}
+				bul->Update(dt);
+				bul->WrapCoords();
+			}
+		}
+		// merge the new spawned asteroids into the main vector
+		if (vec_tempAsteroids.size() != 0)
+		{
+			std::move(std::begin(vec_tempAsteroids), std::end(vec_tempAsteroids), std::back_inserter(vec_asteroids));
+			/*for (auto& n_ast : vec_tempAsteroids)
+			{
+				vec_asteroids.push_back(n_ast);
+			}*/
+		}
+	}
+
+	// If entity is marked as dead, remove them
+	vec_bullets.erase(std::remove_if(vec_bullets.begin(), vec_bullets.end(), [](std::unique_ptr<Entity>& e) { return (e->is_dead); }), vec_bullets.end());
+	vec_asteroids.erase(std::remove_if(vec_asteroids.begin(), vec_asteroids.end(), [](std::unique_ptr<Entity>& e) { return (e->is_dead); }), vec_asteroids.end());
+
+	if (vec_asteroids.size() == 45)
+	{
+		double x, y;
+		for (int i = 0; i < 6; i++)
+		{
+			x = (((double)rand() / (double)RAND_MAX)) * Game::SCREEN_WIDTH;;
+			y = (((double)rand() / (double)RAND_MAX)) * Game::SCREEN_HEIGHT;
+			CreateAsteroid(x, y, Asteroid::LARGE, true, true, vec_asteroids);
+		}
+	}
+}
+
+
+void Game::Draw()
+// Draws the various shapes onto the screen
+{
+	if (vec_asteroids.size() != 0)
+	{
+		for (auto& ent : vec_asteroids)
+		{
+			ent->Draw();
+		}
+	}
+
+	if (vec_bullets.size() != 0)
+	{
+		for (auto& ent : vec_bullets)
+		{
+			ent->Draw();
+		}
+	}
+
+	player->Draw();
 }
 
 
@@ -289,17 +362,33 @@ Game::Game()
 	this->init();
 	this->load_media();
 
-	entities.reserve(100);
+	vec_asteroids.reserve(60);
+	vec_bullets.reserve(20);
 
 	// create background asteriods
-	CreateAsteroids(15, Asteroid::MEDIUM, false, true);
-	CreateAsteroids(15, Asteroid::LARGE, false, true);
-	CreateAsteroids(15, Asteroid::SMALL, false, true);
+	double x, y;
+	for (int i = 0; i < 15; i++)
+	{
+		x = (((double)rand() / (double)RAND_MAX)) * Game::SCREEN_WIDTH;;
+		y = (((double)rand() / (double)RAND_MAX)) * Game::SCREEN_HEIGHT;
+		CreateAsteroid(x, y, Asteroid::SMALL, false, true, vec_asteroids);
 
-	CreateAsteroids(5, Asteroid::LARGE, true, true);
+		x = (((double)rand() / (double)RAND_MAX)) * Game::SCREEN_WIDTH;;
+		y = (((double)rand() / (double)RAND_MAX)) * Game::SCREEN_HEIGHT;
+		CreateAsteroid(x, y, Asteroid::MEDIUM, false, true, vec_asteroids);
 
-	entities.push_back(std::make_unique<Player>(screen_center_x, screen_center_y));
-	player = entities.back().get();
+		x = (((double)rand() / (double)RAND_MAX)) * Game::SCREEN_WIDTH;;
+		y = (((double)rand() / (double)RAND_MAX)) * Game::SCREEN_HEIGHT;
+		CreateAsteroid(x, y, Asteroid::LARGE, false, true, vec_asteroids);
+	}
+
+	for (int i = 0; i < 5; i++)
+	{
+		x = (((double)rand() / (double)RAND_MAX)) * Game::SCREEN_WIDTH;;
+		y = (((double)rand() / (double)RAND_MAX)) * Game::SCREEN_HEIGHT;
+		CreateAsteroid(x, y, Asteroid::LARGE, true, true, vec_asteroids);
+	}
+	player = std::make_unique<Player>(screen_center_x, screen_center_y);
 }
 
 Game::~Game()

@@ -4,23 +4,27 @@ using namespace std;
 
 int main(int argc, char* argv[])
 {
+	char again;
 	// Game 
-	Game game{}; // initialize an object of the Game class
-
-	const int FPS = 60;
-	double frame_delay = 1000.0 / FPS;
-
-	Uint32 frame_start;
-	Uint32 frame_time;
-	double delta_time = 0.0;
-
-	if (game.is_running())
+	do
 	{
-		game.splash_screen(1);
-		cout << "Welcome";
-	}
+		Game game{}; // initialize an object of the Game class
+		//game.set_running(true);
 
-	while (game.is_running())
+		const int FPS = 60;
+		double frame_delay = 1000.0 / FPS;
+
+		Uint32 frame_start;
+		Uint32 frame_time;
+		double delta_time = 0.0;
+
+		if (game.is_running())
+		{
+			game.splash_screen(1);
+			cout << "Welcome";
+		}
+
+		while (game.is_running())
 		{
 			frame_start = SDL_GetTicks();
 
@@ -33,7 +37,7 @@ int main(int argc, char* argv[])
 			if (frame_time < frame_delay)
 			{
 				SDL_Delay(frame_delay - frame_time);
-				delta_time = frame_delay/1000.0;
+				delta_time = frame_delay / 1000.0;
 			}
 			else
 			{
@@ -43,12 +47,10 @@ int main(int argc, char* argv[])
 			//std::cout << "DT: " << delta_time << " || FT: " << frame_time/1000.0 << std::endl;
 		}
 
-	// memory leak test
-	/*std::string text;
-	while (std::cin >> text)
-	{
-		Game text{};
-	}*/
+		std::cout << "\n\nDo you want to play again? (y/n): ";
+		std::cin >> again;
+
+	} while (again == 'y');
 
 	return 0;
 }

@@ -18,6 +18,8 @@ public:
 	};
 
 private:
+	//SDL_Texture* rad_img = nullptr;
+	//SDL_Rect* radius_rect = nullptr;
 	SDL_Texture* img = nullptr;
 	const double MAX_SPEED = 350.0;
 };
