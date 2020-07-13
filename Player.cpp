@@ -18,12 +18,24 @@ Player::Player(double x, double y, float s_r)
 
 	center.x = rect->w * .5;
 	center.y = rect->h * .5;
+
+	rad_img = Game::game_images[Game::eImages::CIRCLE];
+	radius_rect = Game::GetRect(rad_img, pos_x + center.x, pos_y + center.y);
+	radius_rect->w = radius;
+	radius_rect->h = radius;
+	radius_rect->x -= radius / 2;
+	radius_rect->y -= radius/2;
+
 }
 
 
 void Player::Draw()
 {
 	SDL_RenderCopyEx(Game::gRenderer, img, NULL, rect, angle, &center, SDL_FLIP_NONE);
+	if (debug)
+	{
+		SDL_RenderCopy(Game::gRenderer, rad_img, NULL, radius_rect);
+	}
 }
 
 
@@ -42,6 +54,12 @@ void Player::Update(double const& dt)
 
 	rect->x = pos_x;
 	rect->y = pos_y;
+	if (debug)
+	{
+		radius_rect->x = pos_x + center.x - radius / 2;
+		radius_rect->y = pos_y + center.y - radius / 2;
+	}
+
 }
 
 Player::~Player()

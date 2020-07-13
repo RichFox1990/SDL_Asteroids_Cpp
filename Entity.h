@@ -17,6 +17,7 @@ public:
 	int width = 0;
 	int height = 0;
 	float size = 0.0f; // used for asteroids
+	//SDL_Texture* img = nullptr;
 
 	bool is_dead = false;
 	bool isCollidable = true;

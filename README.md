@@ -2,6 +2,15 @@
 
 ## Creating a custom Asteroids game using SDL2
 
+### UPDATE 4
+- Added ship thrust visualisation
+- Added wave system (currently 5 waves)
+- HUD Display and delay when wave complete
+- Code cleanup
+- Added standalone playable game folder (exe, dll + assets included)
+- New splash screen
+- Screenshot folder
+
 ### UPDATE 3
 - Added high score.txt that keeps track of your highest 3 scores
 - Added Score display to screen
@@ -26,5 +35,7 @@
 #### Upcoming
 - Collision - DONE
 - Score system - intially DONE
-- Wave/levels
+- Wave/levels - intially DONE
+- Powerups
+- Lives/ Shield
 - Menus

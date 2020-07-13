@@ -17,7 +17,7 @@ int main(int argc, char* argv[])
 
 		if (game.is_running())
 		{
-			game.splash_screen(1);
+			game.splash_screen(2.5);
 			std::cout << "Welcome\n\n";
 		}
 
@@ -44,7 +44,7 @@ int main(int argc, char* argv[])
 			}
 		}
 
-		std::cout << "\n\nDo you want to play again? (y/n): ";
+		std::cout << std::endl << "\nDo you want to play again? (y/n): ";
 		std::cin >> again;
 
 	} while (again == 'y');

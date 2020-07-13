@@ -3,6 +3,7 @@
 #include <string>
 #include "SDL.h"
 #include <vector>
+#include <array>
 #include "Player.h"
 #include "DelayTimer.h"
 #include "HighScore.h"
@@ -21,11 +22,12 @@ public:
 	static SDL_Renderer* gRenderer;
 	HighScore high_score{};
 	//Globally used font
-	TTF_Font* gFont = nullptr;
+	TTF_Font* g_font = nullptr;
+	TTF_Font* l_font = nullptr;
 
 	void splash_screen(const int time_to_display);
-	void Update(const double& delta_time);
-	void handle_input(const double& delta_time);
+	void Update(double& delta_time);
+	void handle_input(double& delta_time);
 	void render();
 
 	bool is_running();
@@ -38,6 +40,7 @@ public:
 		{
 			SPLASH,
 			SHIP,
+			SHIP_THRUST,
 			ASTEROID1,
 			ASTEROID2,
 			CIRCLE,
@@ -50,7 +53,8 @@ public:
 	std::string image_path[eImages::TOTAL_IMAGES]
 	{
 		"images/splash_image.png",
-		"images/ship.png",
+		"images/ship_normal.png",
+		"images/ship_thrust.png",
 		"images/astroid1.png",
 		"images/astroid2.png",
 		"images/circle.png",
@@ -63,6 +67,8 @@ private:
 	void CreateAsteroid(double x, double y, float size, bool isCollidable, bool allowed_near_player, std::vector<std::unique_ptr<Entity>>& vector, float screen_ratio);
 	void Draw();
 
+	std::array<int, 5> level = { 4, 5, 6, 7, 8 };// { 1, 1, 1, 1, 1}; //{ 4, 5, 6, 7, 8 };
+	int current_level = 0;
 	int score = 0;
 
 	const int ORIG_H = 930;
@@ -82,6 +88,7 @@ private:
 
 	DelayTimer shot_delay{ 200.0f };
 	DelayTimer collision_delay{ 3000.0f };
+	DelayTimer wave_delay{ 4000.0f };
 
 	std::vector<std::unique_ptr<Entity>> vec_asteroids;
 	std::vector<std::unique_ptr<Entity>> vec_bullets;
@@ -90,11 +97,14 @@ private:
 	float smallest_asteroid;
 
 	SDL_Color gtext_color = { 255, 255, 255 };
-	SDL_Texture* LoadRenderedText(std::string textureText, SDL_Color textColor);
+	SDL_Texture* LoadRenderedText(std::string textureText, SDL_Color textColor, TTF_Font* font, SDL_Rect& rect);
 	SDL_Texture* load_image_data(std::string path, bool& allMediaLoaded);
 
 	SDL_Texture* gScore = nullptr;
-	SDL_Rect* score_rect = nullptr;
+	SDL_Texture* wComplete = nullptr;
+	SDL_Texture* lComplete = nullptr;
+	SDL_Rect score_rect;
+	SDL_Rect complete;
 	SDL_Window* gWindow = nullptr;
-	std::unique_ptr<Entity> player;
+	std::unique_ptr<Player> player;
 };
