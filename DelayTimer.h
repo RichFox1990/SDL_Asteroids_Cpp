@@ -9,12 +9,21 @@ public:
 	Uint32 last_success = 0;
 	float delay;
 
-	DelayTimer(float delay_in_ms) 
+	DelayTimer(float delay_in_ms, bool allow_first_check) 
 	{
 		this->delay = delay_in_ms;
+		if (!allow_first_check)
+		{
+			last_success = current_check;
+		}
 	}
 
-	bool Check()
+	void Reset()
+	{
+		current_check = last_success = SDL_GetTicks();
+	}
+
+	bool DelayComplete()
 	{
 		current_check = SDL_GetTicks();
 		if (current_check - last_success >= delay)

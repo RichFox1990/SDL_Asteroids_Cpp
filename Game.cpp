@@ -3,6 +3,7 @@
 #include "Bullet.h"
 #include <SDL_image.h>
 #include <time.h>
+#include "math.h"
 
 
 SDL_Event Game::events;
@@ -80,6 +81,7 @@ return "bool" to indicate successful operation or not*/
 	set_running(success);
 }
 
+
 SDL_Texture* Game::load_image_data(std::string path, bool& allMediaLoaded)
 // ( Called in the loadMedia() method )
 // This loads the texture of the given path, then converts to the texture and returns the pointer to it.
@@ -123,39 +125,6 @@ SDL_Rect* Game::GetRect(SDL_Texture* texture, int x, int y)
 }
 
 
-SDL_Texture* Game::LoadRenderedText(std::string textureText, SDL_Color textColor, TTF_Font* font, SDL_Rect& rect)
-{
-	SDL_Texture* temp = nullptr;
-	//Render text surface
-	SDL_Surface* textSurface = TTF_RenderText_Solid(font, textureText.c_str(), textColor);
-	if (textSurface == NULL)
-	{
-		printf("Unable to render text surface! SDL_ttf Error: %s\n", TTF_GetError());
-	}
-	else
-	{
-		//Create texture from surface pixels
-		temp = SDL_CreateTextureFromSurface(gRenderer, textSurface);
-		if (temp == NULL)
-		{
-			printf("Unable to create texture from rendered text! SDL Error: %s\n", SDL_GetError());
-		}
-		else
-		{
-			if (rect.w == 0)
-			{
-				rect = SDL_Rect{ 0, 0, textSurface->w, textSurface->h };
-			}
-		}
-
-		//Get rid of old surface
-		SDL_FreeSurface(textSurface);
-	}
-
-	return temp;
-}
-
-
 void Game::load_media()
 // Loads media for the game
 {
@@ -184,21 +153,6 @@ void Game::load_media()
 }
 
 
-
-bool Game::is_running()
-// Gets the game's current "running" loop condition
-{
-	return running;
-}
-
-
-void Game::set_running(const bool new_bool)
-// Sets the game main "running" loop condition
-{
-	running = new_bool;
-}
-
-
 void Game::splash_screen(const int time_to_display)
 // Displays and delays the splash screen logo
 {
@@ -211,9 +165,180 @@ void Game::splash_screen(const int time_to_display)
 }
 
 
+SDL_Texture* Game::LoadRenderedText(std::string textureText, SDL_Color textColor, TTF_Font* font, SDL_Rect& rect)
+{
+	SDL_Texture* temp = nullptr;
+	//Render text surface
+	SDL_Surface* textSurface = TTF_RenderText_Solid(font, textureText.c_str(), textColor);
+	if (textSurface == NULL)
+	{
+		printf("Unable to render text surface! SDL_ttf Error: %s\n", TTF_GetError());
+	}
+	else
+	{
+		//Create texture from surface pixels
+		temp = SDL_CreateTextureFromSurface(gRenderer, textSurface);
+		if (temp == NULL)
+		{
+			printf("Unable to create texture from rendered text! SDL Error: %s\n", SDL_GetError());
+		}
+		else
+		{
+			if (rect.w == 0)
+			{
+				rect = SDL_Rect{ 0, 0, textSurface->w, textSurface->h };
+			}
+		}
+
+		//Get rid of old surface
+		SDL_FreeSurface(textSurface);
+	}
+	return temp;
+}
+
+
+void Game::CreateAsteroid(double x, double y, float size, bool isCollidable, bool allowed_near_player, std::vector<std::unique_ptr<Entity>>& vector, float s_r)
+{
+	int angle;
+	double vx;
+	double vy;
+	double rand_img;
+
+	// randomise starting angle of image
+	angle = ((double)rand() / (double)RAND_MAX) * 360;
+
+	// randomise radian angle of velocity
+	vx = ((double)rand() / (double)RAND_MAX) * 6.283185f;
+	vy = ((double)rand() / (double)RAND_MAX) * 6.283185f;
+	// calculate vector from this radian angle
+	vx = sin(vx) * 125.0;
+	vy = cos(vx) * 125.0;
+
+	// random number to pic between 2 asteroid images
+	rand_img = ((float)rand() / (float)RAND_MAX);
+
+	// If these asteroids cant spawn near the player (new wave etc)
+	if (!allowed_near_player)
+	{
+		// create temp entity
+		Asteroid temp(x, y, vx, vy, angle, size, rand_img, isCollidable, s_r);
+		// enlarge the radius 
+		temp.radius *= 6.0 * s_r;
+		// use this entity to move the x,y coords if this asteroid is near the player using collision method
+		while (player->Collision(temp))
+		{
+			vx < 0 ? temp.pos_x -= 10 : temp.pos_x += 10;
+			vy < 0 ? temp.pos_y += 10 : temp.pos_y -= 10;
+		}
+		x = temp.pos_x;
+		y = temp.pos_y;
+	}
+	// Push new asteroid into given vector
+	vector.push_back(std::make_unique<Asteroid>(x, y, vx, vy, angle, size, rand_img, isCollidable, s_r));
+}
+
+
+void Game::Create2SubAsteroids(const Asteroid* const ast, std::vector<std::unique_ptr<Entity>>& vector)
+{
+	// take radian angle of asteroid the 2 new ones will split from
+	double radians = atan2(ast->vel_x, ast->vel_y);
+	double radians2 = radians;
+
+	// calculate an offset (max 1/4*PI (90 degrees)
+	double offset = (PI / 4.0) * ((double)rand() / (double)RAND_MAX);
+	// make sure they cant be too close to 0
+	if (abs(offset) < .2) { offset = .2; }
+	// set one to plus and other to minus of the offset (to imatate them splitting uniformly)
+	radians += offset;
+	radians2 -= offset;
+
+	// Calculate the new velocity vector from these angles
+	double vx = sin(radians) * 125.0;
+	double vy = cos(radians) * 125.0;
+	double vx2 = sin(radians2) * 125.0;
+	double vy2 = cos(radians2) * 125.0;
+
+	// randomise the image thats used (out of 2 possible images)
+	double rand_img = ((float)rand() / (float)RAND_MAX);
+
+	// push the asteroids into the given vector
+	vector.push_back(std::make_unique<Asteroid>(ast->pos_x, ast->pos_y, vx, vy, ast->angle, ast->size - 2.0, rand_img, ast->isCollidable, s_r));
+	vector.push_back(std::make_unique<Asteroid>(ast->pos_x, ast->pos_y, vx2, vy2, ast->angle, ast->size - 2.0, rand_img, ast->isCollidable, s_r));
+}
+
+
+void Game::handle_wave_completion()
+{
+	wave_complete = true;
+
+	////if all levels complete
+	//if (level.size() - 1 == current_level)
+	//{
+	//	// load game complete texture 
+	//	if (lComplete == nullptr)
+	//	{
+	//		complete.x = SCREEN_WIDTH / 2 - complete.w / 2;
+	//		complete.y = SCREEN_HEIGHT / 2 - complete.h / 2;
+	//		//wave_delay.last_success = wave_delay.current_check = SDL_GetTicks();
+	//		lComplete = LoadRenderedText("GAME COMPLETE - WIP", gtext_color, l_font, complete);
+	//	}
+	//	std::cout << "YOU WON" << std::endl;
+	//	// Push scores is in top 3
+	//	if (score > high_score.top3[2].second)
+	//	{
+	//		std::string name;
+	//		std::cout << "\nYou scored in the top 3. Please type your name(no spaces): " << std::endl;
+	//		SDL_RenderCopy(gRenderer, lComplete, NULL, &complete);
+	//		SDL_RenderPresent(gRenderer);
+	//		std::cin >> name;
+	//		high_score.PushScore(name, score);
+	//		high_score.Print();
+	//		set_running(false);
+	//	}
+	//	else
+	//	{
+	//		std::cout << "\nYou didn't score in the top 3. Better luck next time\n" << std::endl;
+	//		high_score.Print();
+	//		SDL_RenderCopy(gRenderer, lComplete, NULL, &complete);
+	//		SDL_RenderPresent(gRenderer);
+	//		//SDL_Delay(3000.0);
+	//		set_running(false);
+	//	}
+
+	//	SDL_DestroyTexture(lComplete);
+	//	lComplete = nullptr;
+	//	
+	//}
+	// //if more levels to go
+	//else if (level.size() - 1 > current_level)
+
+	// Simple endless mode
+	wComplete = LoadRenderedText("WAVE " + std::to_string(current_level) + " COMPLETE", gtext_color, l_font, complete);
+	complete.x = SCREEN_WIDTH / 2 - complete.w / 2;
+	complete.y = SCREEN_HEIGHT / 2 - complete.h / 2;
+	double x, y;
+	current_level++;
+	for (int i = 0; i < asteroid_amount + current_level; i++)
+	{
+		x = (((double)rand() / (double)RAND_MAX)) * Game::SCREEN_WIDTH;
+		y = (((double)rand() / (double)RAND_MAX)) * Game::SCREEN_HEIGHT;
+		CreateAsteroid(x, y, Asteroid::LARGE, true, false, vec_asteroids, s_r);
+	}
+	wave_delay.Reset();
+	while (!wave_delay.DelayComplete())
+	{
+		SDL_RenderCopy(gRenderer, wComplete, NULL, &complete);
+		SDL_RenderPresent(gRenderer);
+	}
+
+	SDL_DestroyTexture(wComplete);
+	wComplete = nullptr;
+}
+
+
 void Game::handle_input(double& dt)
 {
-	dt > 2 ? dt = 0 : dt = dt;
+	//dt > 2 ? dt = 0 : dt = dt;
 	while (SDL_PollEvent(&events) != 0)
 	{
 		if (events.type == SDL_QUIT)
@@ -228,13 +353,13 @@ void Game::handle_input(double& dt)
 			{
 			case SDLK_SPACE:
 				//entities.push_back(std::make_unique<Bullet>(player));
-				break;			
+				break;
 			case SDLK_w:
 				player->img = Game::game_images[Game::eImages::SHIP_THRUST];
 				break;
 			case SDLK_i:
 				player->debug = !(player->debug);
-				break;			
+				break;
 			case SDLK_UP:
 				player->img = Game::game_images[Game::eImages::SHIP_THRUST];
 				break;
@@ -251,9 +376,15 @@ void Game::handle_input(double& dt)
 			case SDLK_UP:
 				player->img = Game::game_images[Game::eImages::SHIP];
 				break;
+			case SDLK_a:
+				player->to_rotate = 0;
+				break;
+			case SDLK_d:
+				player->to_rotate = 0;
+				break;
 			}
-			}
-	
+		}
+
 	}
 	const Uint8* keystates = SDL_GetKeyboardState(NULL);
 	//Get the keystates
@@ -265,17 +396,20 @@ void Game::handle_input(double& dt)
 	}
 	if (keystates[SDL_SCANCODE_A] || keystates[SDL_SCANCODE_LEFT])
 	{
-		player->angle -= ANGLE_MODIFIER * dt;
-		player->angle = player->angle % 360;
+		player->to_rotate -= ANGLE_MODIFIER;
+		//player->angle -= 
+		//player->angle = player->angle % 360;
 	}
 	if (keystates[SDL_SCANCODE_D] || keystates[SDL_SCANCODE_RIGHT])
 	{
-		player->angle += ANGLE_MODIFIER * dt;
-		player->angle = player->angle % 360;
+		player->to_rotate += ANGLE_MODIFIER;
+
+		//player->angle += ANGLE_MODIFIER * dt;
+		//player->angle = player->angle % 360;
 	}
 	if (keystates[SDL_SCANCODE_SPACE] && (vec_asteroids.size() > 45))
 	{
-		if (shot_delay.Check())
+		if (shot_delay.DelayComplete())
 		{
 			vec_bullets.push_back(std::make_unique<Bullet>(player.get(), s_r));
 		}
@@ -283,66 +417,21 @@ void Game::handle_input(double& dt)
 }
 
 
-void Game::render()
-{
-	SDL_SetRenderDrawColor(gRenderer, 0, 0, 0, 255);
-	SDL_RenderClear(gRenderer);
-	Draw();
-	SDL_RenderCopy(Game::gRenderer, gScore, NULL, &score_rect);
-	SDL_RenderPresent(gRenderer);
-}
-
-void Game::CreateAsteroid(double x, double y, float size, bool isCollidable, bool allowed_near_player, std::vector<std::unique_ptr<Entity>>& vector, float s_r)
-{
-	int angle;
-	double vx;
-	double vy;
-	double rand_img;
-
-	angle = ((double)rand() / (double)RAND_MAX) * 360;
-	vx = ((double)rand() / (double)RAND_MAX) * 6.283185f;
-	vy = ((double)rand() / (double)RAND_MAX) * 6.283185f;
-	vx = sin(vx) * 125.0;
-	vy = cos(vx) * 125.0;
-
-	rand_img = ((float)rand() / (float)RAND_MAX);
-
-	if (!allowed_near_player)
-	{
-		// create temp entity
-		Asteroid temp(x, y, vx, vy, angle, size, rand_img, isCollidable, s_r);
-		// enlarge the radius 
-		temp.radius *= 6.0 * s_r;
-		// use this entity to move the x,y coords if this asteroid is near the player
-		while (player->Collision(temp))
-		{
-			vx < 0 ? temp.pos_x -= 10 : temp.pos_x += 10;
-			vy < 0 ? temp.pos_y += 10 : temp.pos_y -= 10;
-			//std::cout << "Spawn Collision detected!!" << std::endl;
-		}
-		x = temp.pos_x;
-		y = temp.pos_y;
-	}
-
-	vector.push_back(std::make_unique<Asteroid>(x, y, vx, vy, angle, size, rand_img, isCollidable, s_r));
-
-}
-
-
 void Game::Update(double& dt)
 // Main object update loop for the game
 {
-	dt > 2 ? dt = 0 : dt = dt;
+	// Update player and Wrap coords
 	player->Update(dt);
 	player->WrapCoords(SCREEN_WIDTH, SCREEN_HEIGHT);
 
+	// check collisions between player and asteroids
 	if (vec_asteroids.size() != 0)
 	{
 		for (auto& ast : vec_asteroids)
 		{
 			if (ast->isCollidable)
 			{
-				if ((player->Collision(*ast)) && (collision_delay.Check()))
+				if ((player->Collision(*ast)) && (collision_delay.DelayComplete()))
 				{
 					//std::cout << "COLLISION PLAYER" << std::endl;
 					if (score > high_score.top3[2].second)
@@ -361,6 +450,8 @@ void Game::Update(double& dt)
 					set_running(false);
 				}
 			}
+
+			// update and wrap coords on each asteroid
 			ast->Update(dt);
 			ast->WrapCoords(SCREEN_WIDTH, SCREEN_HEIGHT);
 		}
@@ -383,99 +474,58 @@ void Game::Update(double& dt)
 					if (ast->isCollidable)
 					{
 						// if collision
-						if (bul->Collision(*ast)) 
+						if (bul->Collision(*ast))
 						{
 							bul->is_dead = true;
 							ast->is_dead = true;
 							score += 100;
+							SDL_DestroyTexture(gScore);
+							gScore = nullptr;
 							gScore = LoadRenderedText("SCORE: " + std::to_string(score), gtext_color, g_font, score_rect);
 
 							if (ast->size > Asteroid::SMALL)
 							{
-								for (int i = 0; i < 2; i++)
-									CreateAsteroid(ast->pos_x, ast->pos_y, ast->size - 2.0f, true, true, vec_tempAsteroids, s_r);
+								Create2SubAsteroids((Asteroid*)(ast.get()), vec_tempAsteroids);
 							}
+							break;
 						}
 					}
 				}
+				// update bullet location
 				bul->Update(dt);
+				// check if bullet is outside of screen (set isDead to trye if it is outside screen)
 				bul->WrapCoords(SCREEN_WIDTH, SCREEN_HEIGHT);
 			}
 		}
-		// merge the new spawned asteroids into the main vector
+
+		// merge any new spawned asteroids into the main vector
 		if (vec_tempAsteroids.size() != 0)
 		{
 			std::move(std::begin(vec_tempAsteroids), std::end(vec_tempAsteroids), std::back_inserter(vec_asteroids));
 		}
 	}
 
-	// If entity is marked as dead, remove them
+	// If bullet/asteroid is marked as dead, remove them
 	vec_bullets.erase(std::remove_if(vec_bullets.begin(), vec_bullets.end(), [](std::unique_ptr<Entity>& e) { return (e->is_dead); }), vec_bullets.end());
 	vec_asteroids.erase(std::remove_if(vec_asteroids.begin(), vec_asteroids.end(), [](std::unique_ptr<Entity>& e) { return (e->is_dead); }), vec_asteroids.end());
 
-	// if only background asteroids
-	if ((vec_asteroids.size() == 45) && (vec_bullets.size() == 0))
-	{
-		//if all levels complete
-		if (level.size() - 1 == current_level)
-		{
-			// load game complete texture
-			if (lComplete == nullptr)
-			{
-				complete.x = SCREEN_WIDTH / 2 - complete.w / 2;
-				complete.y = SCREEN_HEIGHT / 2 - complete.h / 2;
-				wave_delay.last_success = wave_delay.current_check = SDL_GetTicks();
-				lComplete = LoadRenderedText("GAME COMPLETE - WIP", gtext_color, l_font, complete);
-			}
-			std::cout << "YOU WON" << std::endl;
-			// Push scores is in top 3
-			if (score > high_score.top3[2].second)
-			{
-				std::string name;
-				std::cout << "\nYou scored in the top 3. Please type your name(no spaces): " << std::endl;
-				SDL_RenderCopy(gRenderer, lComplete, NULL, &complete);
-				SDL_RenderPresent(gRenderer);
-				std::cin >> name;
-				high_score.PushScore(name, score);
-				high_score.Print();
-				set_running(false);
-			}
-			else
-			{
-				std::cout << "\nYou didn't score in the top 3. Better luck next time\n" << std::endl;
-				high_score.Print();
-				SDL_RenderCopy(gRenderer, lComplete, NULL, &complete);
-				SDL_RenderPresent(gRenderer);
-				SDL_Delay(3000.0);
-				set_running(false);
-			}
-			SDL_DestroyTexture(lComplete);
-			
-		}
-		// if more levels to go
-		else if (level.size() - 1 > current_level)
-		{
-			wComplete = LoadRenderedText("WAVE " + std::to_string(current_level + 1) + " COMPLETE", gtext_color, l_font, complete);
-			complete.x = SCREEN_WIDTH/2 - complete.w / 2;
-			complete.y = SCREEN_HEIGHT/2 - complete.h / 2;
-			double x, y;
-			current_level++;
-			for (int i = 0; i < level[current_level]; i++)
-			{
-				x = (((double)rand() / (double)RAND_MAX)) * Game::SCREEN_WIDTH;
-				y = (((double)rand() / (double)RAND_MAX)) * Game::SCREEN_HEIGHT;
-				CreateAsteroid(x, y, Asteroid::LARGE, true, false, vec_asteroids, s_r);
-			}
 
-			wave_delay.last_success = wave_delay.current_check = SDL_GetTicks();
-			while (!wave_delay.Check())
-			{
-				SDL_RenderCopy(gRenderer, wComplete, NULL, &complete);
-				SDL_RenderPresent(gRenderer);
-			}
-			SDL_DestroyTexture(wComplete);
-		}
+	// IF KILLED ALL ASTEROIDS
+	// if only background asteroids remain and no bullets on screen
+	if ((vec_asteroids.size() == 45) && (vec_bullets.empty()))
+	{	
+		handle_wave_completion();
 	}
+}
+
+
+void Game::render()
+{
+	SDL_SetRenderDrawColor(gRenderer, 0, 0, 0, 255);
+	SDL_RenderClear(gRenderer);
+	Draw();
+	SDL_RenderCopy(Game::gRenderer, gScore, NULL, &score_rect);
+	SDL_RenderPresent(gRenderer);
 }
 
 
@@ -501,39 +551,6 @@ void Game::Draw()
 	player->Draw();
 }
 
-
-void Game::exit_game()
-/* Free surfaces and set any pointers to Null before exiting
-IMPORTANT FOR MEMORY USAGE INSIDE PROGRAM */
-{
-	std::cout << "Cleaning up code";
-	SDL_Delay(250);
-
-	int TOTAL = eImages::TOTAL_IMAGES;
-	for (int x = 0; x < TOTAL; x++)
-	{
-		SDL_DestroyTexture(game_images[x]);
-		game_images[x] = nullptr;
-	}
-	SDL_DestroyTexture(gScore);
-	gScore = nullptr;
-
-	// Destroy Window and set pointer to NULL
-	SDL_DestroyWindow(gWindow);
-	gWindow = nullptr;
-	SDL_DestroyRenderer(gRenderer);
-	gRenderer = nullptr;
-
-	//Free global font
-	TTF_CloseFont(g_font);
-	TTF_CloseFont(l_font);
-	g_font = nullptr;
-	l_font = nullptr;
-
-	IMG_Quit();
-	TTF_Quit();
-	SDL_Quit();
-}
 
 Game::Game()
 {
@@ -571,7 +588,7 @@ Game::Game()
 	player = std::make_unique<Player>(screen_center_x, screen_center_y, s_r);
 
 	// Create main asteroids
-	for (int i = 0; i < level[current_level]; i++)
+	for (int i = 0; i < asteroid_amount+ current_level; i++)
 	{
 		x = (((double)rand() / (double)RAND_MAX)) * Game::SCREEN_WIDTH;;
 		y = (((double)rand() / (double)RAND_MAX)) * Game::SCREEN_HEIGHT;
@@ -581,8 +598,57 @@ Game::Game()
 
 	gScore = LoadRenderedText("SCORE: " + std::to_string(score), gtext_color, g_font, score_rect);
 	score_rect.x = SCREEN_WIDTH/2 - score_rect.w / 2;
-	score_rect.y += 10 * s_r;;
+	score_rect.y += 10 * s_r;
 }
+
+
+bool Game::is_running()
+// Gets the game's current "running" loop condition
+{
+	return running;
+}
+
+
+void Game::set_running(const bool new_bool)
+// Sets the game main "running" loop condition
+{
+	running = new_bool;
+}
+
+
+void Game::exit_game()
+/* Free surfaces and set any pointers to Null before exiting
+IMPORTANT FOR MEMORY USAGE INSIDE PROGRAM */
+{
+	std::cout << "Cleaning up code";
+	SDL_Delay(250);
+
+	int TOTAL = eImages::TOTAL_IMAGES;
+	for (int x = 0; x < TOTAL; x++)
+	{
+		SDL_DestroyTexture(game_images[x]);
+		game_images[x] = nullptr;
+	}
+	SDL_DestroyTexture(gScore);
+	gScore = nullptr;
+
+	// Destroy Window and set pointer to NULL
+	SDL_DestroyWindow(gWindow);
+	gWindow = nullptr;
+	SDL_DestroyRenderer(gRenderer);
+	gRenderer = nullptr;
+
+	//Free global font
+	TTF_CloseFont(g_font);
+	TTF_CloseFont(l_font);
+	g_font = nullptr;
+	l_font = nullptr;
+
+	IMG_Quit();
+	TTF_Quit();
+	SDL_Quit();
+}
+
 
 Game::~Game()
 {

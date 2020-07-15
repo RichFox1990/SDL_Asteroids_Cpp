@@ -6,6 +6,7 @@ class Player : public Entity
 {
 public:
 	bool debug = false;
+	int to_rotate = 0;
 
 	Player(double x, double y, float screen_ratio);
 
@@ -19,5 +20,6 @@ private:
 	SDL_Rect* radius_rect;
 
 	int MAX_SPEED;
+	const int MAX_ANGLE_MODIFIER = 350;
 };
 

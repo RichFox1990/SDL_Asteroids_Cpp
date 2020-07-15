@@ -1,3 +1,3 @@
 Richard: 10200
-RICH: 6500
-rich: 4800
+rich: 7800
+rich: 6900

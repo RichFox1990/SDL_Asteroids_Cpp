@@ -91,6 +91,9 @@ void Asteroid::Draw()
 Asteroid::~Asteroid()
 {
 	//std::cout << "Deleted Asteroid Object" << std::endl;
+
+	//SDL_DestroyTexture(img);
+	img = nullptr;
 	delete rect;
 	rect = nullptr;
 }

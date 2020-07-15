@@ -5,7 +5,7 @@ class Entity
 {
 public:
 	Entity() {}
-	virtual ~Entity() {};
+	//virtual ~Entity() {};
 	// Methods
 	virtual bool Collision(Entity& other_entity);
 	virtual void WrapCoords(int screen_width, int screen_height);

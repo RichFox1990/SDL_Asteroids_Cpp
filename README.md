@@ -2,6 +2,14 @@
 
 ## Creating a custom Asteroids game using SDL2
 
+
+### UPDATE 5
+- Split Asteroids velocity now calculated based on existing parent asteroid velocity + offset (more natural physics)
+- Added angle acceleration (better precision when tapping)
+- Default endless mode
+- Bugfix: bullet can no longer destroy more than 1 asteroid in certain circumstances)
+- Code: Tidy up and fixed memory leak.
+
 ### UPDATE 4
 - Added ship thrust visualisation
 - Added wave system (currently 5 waves)

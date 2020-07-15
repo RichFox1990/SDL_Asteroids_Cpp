@@ -33,10 +33,16 @@ int main(int argc, char* argv[])
 
 			frame_time = SDL_GetTicks() - frame_start;
 
+
 			if (frame_time < frame_delay)
 			{
 				SDL_Delay(frame_delay - frame_time);
 				delta_time = frame_delay / 1000.0;
+			}
+			else if (game.wave_complete) // If screen has been delayed and showing a message (reset delta so the new asteroids do not get updated by their vel* a huge delta time amount)
+			{
+				delta_time = 0.0;
+				game.wave_complete = false;
 			}
 			else
 			{

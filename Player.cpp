@@ -49,6 +49,15 @@ void Player::Update(double const& dt)
 		vel_y = (vel_y / distance) * MAX_SPEED;
 	}
 
+	if (abs(to_rotate) >= MAX_ANGLE_MODIFIER)
+	{
+		if (to_rotate > 0) { to_rotate = MAX_ANGLE_MODIFIER; }
+		if (to_rotate < 0) { to_rotate = -(MAX_ANGLE_MODIFIER); }
+	}
+
+	angle += to_rotate * dt;
+	angle = angle % 360;
+
 	pos_x += vel_x * dt;
 	pos_y += vel_y * dt;
 

@@ -8,6 +8,7 @@
 #include "DelayTimer.h"
 #include "HighScore.h"
 #include <SDL_ttf.h>
+#include "Asteroid.h"
 
 static const double PI = 3.14159265;
 
@@ -32,6 +33,8 @@ public:
 
 	bool is_running();
 	void set_running(const bool new_bool);
+	bool wave_complete = false;
+
 
 	// Enum reference for gImages array of textures
 	struct eImages
@@ -60,15 +63,21 @@ public:
 		"images/circle.png",
 	};
 
+	void Create2SubAsteroids(const Asteroid* const ast, std::vector<std::unique_ptr<Entity>>& vector);
+
 private:
 	void init();
 	void load_media();
 	void exit_game();
+	void handle_wave_completion();
 	void CreateAsteroid(double x, double y, float size, bool isCollidable, bool allowed_near_player, std::vector<std::unique_ptr<Entity>>& vector, float screen_ratio);
+
 	void Draw();
 
-	std::array<int, 5> level = { 4, 5, 6, 7, 8 };// { 1, 1, 1, 1, 1}; //{ 4, 5, 6, 7, 8 };
-	int current_level = 0;
+	//std::array<int, 2> level = { 1,100 };//{ 4, 5, 6, 7, 8 };// { 1, 1, 1, 1, 1}; //{ 4, 5, 6, 7, 8 };
+	int asteroid_amount = 3;
+
+	int current_level = 1;
 	int score = 0;
 
 	const int ORIG_H = 930;
@@ -84,11 +93,11 @@ private:
 	int screen_center_y;
 
 	int SHIP_THRUST;
-	const int ANGLE_MODIFIER = 350;
+	const int ANGLE_MODIFIER = 35;
 
-	DelayTimer shot_delay{ 200.0f };
-	DelayTimer collision_delay{ 3000.0f };
-	DelayTimer wave_delay{ 4000.0f };
+	DelayTimer shot_delay{ 200.0f , true};
+	DelayTimer collision_delay{ 3000.0f , false};
+	DelayTimer wave_delay{ 4000.0f , false};
 
 	std::vector<std::unique_ptr<Entity>> vec_asteroids;
 	std::vector<std::unique_ptr<Entity>> vec_bullets;
