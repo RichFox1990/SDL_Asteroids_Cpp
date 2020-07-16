@@ -211,8 +211,8 @@ void Game::CreateAsteroid(double x, double y, float size, bool isCollidable, boo
 	vx = ((double)rand() / (double)RAND_MAX) * 6.283185f;
 	vy = ((double)rand() / (double)RAND_MAX) * 6.283185f;
 	// calculate vector from this radian angle
-	vx = sin(vx) * 125.0;
-	vy = cos(vx) * 125.0;
+	vx = sin(vx) * (((150.0*s_r) * ((double)rand() / (double)RAND_MAX)) + 60.0);
+	vy = cos(vx) * (((150.0*s_r) * ((double)rand() / (double)RAND_MAX)) + 60.0);
 
 	// random number to pic between 2 asteroid images
 	rand_img = ((float)rand() / (float)RAND_MAX);
@@ -251,12 +251,12 @@ void Game::Create2SubAsteroids(const Asteroid* const ast, std::vector<std::uniqu
 	// set one to plus and other to minus of the offset (to imatate them splitting uniformly)
 	radians += offset;
 	radians2 -= offset;
-
+	float distance = sqrtf(powf(ast->vel_x, 2) + powf(ast->vel_y, 2));
 	// Calculate the new velocity vector from these angles
-	double vx = sin(radians) * 125.0;
-	double vy = cos(radians) * 125.0;
-	double vx2 = sin(radians2) * 125.0;
-	double vy2 = cos(radians2) * 125.0;
+	double vx = sin(radians) * distance;
+	double vy = cos(radians) * distance;
+	double vx2 = sin(radians2) * distance;
+	double vy2 = cos(radians2) * distance;
 
 	// randomise the image thats used (out of 2 possible images)
 	double rand_img = ((float)rand() / (float)RAND_MAX);
@@ -336,6 +336,56 @@ void Game::handle_wave_completion()
 }
 
 
+void Game::handle_death()
+{
+	if (death1 == nullptr)
+	{
+		death1 = LoadRenderedText("YOU DIED", gtext_color, l_font, death1_rect);
+		death2 = LoadRenderedText("Play again? (y/n)", gtext_color, g_font, death2_rect);
+		death1_rect.x = SCREEN_WIDTH / 2 - death1_rect.w / 2;
+		death1_rect.y = SCREEN_HEIGHT / 4 - death1_rect.h / 2;
+		death2_rect.x = SCREEN_WIDTH / 2 - death2_rect.w / 2;
+		death2_rect.y = SCREEN_HEIGHT - SCREEN_HEIGHT / 4 - death2_rect.h / 2;
+	}
+	score_rect = death1_rect;
+
+	score_rect.y = SCREEN_HEIGHT/2 - score_rect.h/2;
+	float temp_dt = 1000/60.0;
+	double zero_dt = 0.0;
+	DelayTimer delta(temp_dt, false);
+	while (play_again == NULL)
+	{
+		if (delta.DelayComplete())
+		{
+			SDL_SetRenderDrawColor(gRenderer, 0, 0, 0, 255);
+			SDL_RenderClear(gRenderer);
+			handle_input(zero_dt);
+			for (auto& ast : vec_asteroids)
+			{
+				if (ast.get() != player->asteroid_death->get())
+				{
+					ast->Update(temp_dt / 1000);
+					ast->WrapCoords(SCREEN_WIDTH, SCREEN_HEIGHT);
+				}
+				else
+				{
+					ast->Update(0.0);
+				}
+				ast->Draw();
+			}
+			player->Update(0.0);
+			player->Draw();
+			SDL_RenderCopy(gRenderer, gScore, NULL, &score_rect);
+			SDL_RenderCopy(gRenderer, death1, NULL, &death1_rect);
+			SDL_RenderCopy(gRenderer, death2, NULL, &death2_rect);
+			SDL_RenderPresent(gRenderer);
+		}
+	}
+	SDL_DestroyTexture(death1);
+	SDL_DestroyTexture(death2);
+}
+
+
 void Game::handle_input(double& dt)
 {
 	//dt > 2 ? dt = 0 : dt = dt;
@@ -352,18 +402,36 @@ void Game::handle_input(double& dt)
 			switch (events.key.keysym.sym)
 			{
 			case SDLK_SPACE:
-				//entities.push_back(std::make_unique<Bullet>(player));
 				break;
 			case SDLK_w:
 				player->img = Game::game_images[Game::eImages::SHIP_THRUST];
 				break;
 			case SDLK_i:
 				player->debug = !(player->debug);
+				for (auto& e : vec_asteroids)
+				{
+					e->debug = !(e->debug);
+				}
 				break;
 			case SDLK_UP:
 				player->img = Game::game_images[Game::eImages::SHIP_THRUST];
 				break;
-
+			case SDLK_y:
+				if (player->is_dead)
+				{
+					// reset game
+					play_again = 'y';
+					set_running(false);
+				}
+				break;
+			case SDLK_n:
+				if (player->is_dead)
+				{
+					// end game
+					play_again = 'n';
+					set_running(false);
+				}
+				break;
 			}
 		}
 		else if (events.type == SDL_KEYUP)
@@ -379,7 +447,13 @@ void Game::handle_input(double& dt)
 			case SDLK_a:
 				player->to_rotate = 0;
 				break;
+			case SDLK_LEFT:
+				player->to_rotate = 0;
+				break;
 			case SDLK_d:
+				player->to_rotate = 0;
+				break;
+			case SDLK_RIGHT:
 				player->to_rotate = 0;
 				break;
 			}
@@ -420,10 +494,6 @@ void Game::handle_input(double& dt)
 void Game::Update(double& dt)
 // Main object update loop for the game
 {
-	// Update player and Wrap coords
-	player->Update(dt);
-	player->WrapCoords(SCREEN_WIDTH, SCREEN_HEIGHT);
-
 	// check collisions between player and asteroids
 	if (vec_asteroids.size() != 0)
 	{
@@ -431,7 +501,7 @@ void Game::Update(double& dt)
 		{
 			if (ast->isCollidable)
 			{
-				if ((player->Collision(*ast)) && (collision_delay.DelayComplete()))
+				if (player->Collision(*ast))// && (collision_delay.DelayComplete()))
 				{
 					//std::cout << "COLLISION PLAYER" << std::endl;
 					if (score > high_score.top3[2].second)
@@ -447,7 +517,9 @@ void Game::Update(double& dt)
 					{
 						std::cout << "\nYou didn't score in the top 3. Better luck next time\n" << std::endl;
 					}
-					set_running(false);
+					player->is_dead = true;
+					player->asteroid_death = &ast;
+					handle_death();
 				}
 			}
 
@@ -456,6 +528,9 @@ void Game::Update(double& dt)
 			ast->WrapCoords(SCREEN_WIDTH, SCREEN_HEIGHT);
 		}
 	}
+	// Update player and Wrap coords
+	player->Update(dt);
+	player->WrapCoords(SCREEN_WIDTH, SCREEN_HEIGHT);
 
 
 	if (vec_bullets.size() != 0)

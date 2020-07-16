@@ -12,6 +12,7 @@ public:
 	virtual void Update(double const& dt) = 0;
 	virtual void Draw() = 0;
 
+
 	//Variables
 	int angle = 0;
 	int width = 0;
@@ -21,6 +22,7 @@ public:
 
 	bool is_dead = false;
 	bool isCollidable = true;
+	bool debug = false;
 
 	double pos_x = 0;
 	double pos_y = 0;

@@ -27,13 +27,14 @@ public:
 	TTF_Font* l_font = nullptr;
 
 	void splash_screen(const int time_to_display);
-	void Update(double& delta_time);
 	void handle_input(double& delta_time);
+	void Update(double& delta_time);
 	void render();
 
 	bool is_running();
 	void set_running(const bool new_bool);
 	bool wave_complete = false;
+	char play_again = NULL;
 
 
 	// Enum reference for gImages array of textures
@@ -58,8 +59,8 @@ public:
 		"images/splash_image.png",
 		"images/ship_normal.png",
 		"images/ship_thrust.png",
-		"images/astroid1.png",
-		"images/astroid2.png",
+		"images/ast1.png",
+		"images/ast2.png",
 		"images/circle.png",
 	};
 
@@ -105,13 +106,19 @@ private:
 	bool running = true;
 	float smallest_asteroid;
 
-	SDL_Color gtext_color = { 255, 255, 255 };
+	SDL_Color gtext_color = { 255, 255, 255 };	
+	
+	void handle_death();
 	SDL_Texture* LoadRenderedText(std::string textureText, SDL_Color textColor, TTF_Font* font, SDL_Rect& rect);
 	SDL_Texture* load_image_data(std::string path, bool& allMediaLoaded);
 
 	SDL_Texture* gScore = nullptr;
 	SDL_Texture* wComplete = nullptr;
 	SDL_Texture* lComplete = nullptr;
+	SDL_Texture* death1 = nullptr;
+	SDL_Texture* death2 = nullptr;
+	SDL_Rect death1_rect;
+	SDL_Rect death2_rect;
 	SDL_Rect score_rect;
 	SDL_Rect complete;
 	SDL_Window* gWindow = nullptr;

@@ -3,6 +3,13 @@
 ## Creating a custom Asteroids game using SDL2
 
 
+### UPDATE 5 (16/7/20)
+- NEW Game over screen (displays, score and can replay the game through the main window)
+- NEW asteroid speed calculations
+- ADDED press 'i' to view collision circles. (please report any strange sizes wit ha pic and your resolution settings)
+- Split asteroids inhert speed from parent asteroid when created (with offset split angle)
+- New asteroid images
+
 ### UPDATE 5
 - Split Asteroids velocity now calculated based on existing parent asteroid velocity + offset (more natural physics)
 - Added angle acceleration (better precision when tapping)

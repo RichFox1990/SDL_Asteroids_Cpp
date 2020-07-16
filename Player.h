@@ -1,4 +1,5 @@
 #pragma once
+#include <iostream>
 #include "Entity.h"
 #include "SDL.h"
 
@@ -13,6 +14,7 @@ public:
 	void Draw() override;
 	void Update(double const& dt) override;
 	SDL_Texture* img = nullptr;
+	std::unique_ptr<Entity>* asteroid_death = nullptr;
 	~Player(); // clear rects
 
 private:

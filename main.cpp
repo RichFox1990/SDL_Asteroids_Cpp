@@ -50,8 +50,9 @@ int main(int argc, char* argv[])
 			}
 		}
 
-		std::cout << std::endl << "\nDo you want to play again? (y/n): ";
-		std::cin >> again;
+		//std::cout << std::endl << "\nDo you want to play again? (y/n): ";
+		//std::cin >> again;
+		again = game.play_again;
 
 	} while (again == 'y');
 

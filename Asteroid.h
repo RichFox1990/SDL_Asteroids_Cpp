@@ -19,7 +19,8 @@ public:
 	};
 
 private:
-
+	SDL_Texture* rad_img = nullptr;
+	SDL_Rect* radius_rect = nullptr;
 	int MAX_SPEED;
 };
 

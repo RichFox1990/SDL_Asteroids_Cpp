@@ -28,6 +28,10 @@ Asteroid::Asteroid(double x, double y, double vx, double vy, int angle, float si
 		img = Game::game_images[Game::eImages::ASTEROID2];
 		rect = Game::GetRect(img, x, y);
 	}
+	rect->w /= 10;
+	rect->h /= 10;
+	rect->w *= s_r;
+	rect->h *= s_r;
 
 	// scale asteroid depending on variable
 	if (isCollidable) // If its not just for the background
@@ -48,9 +52,19 @@ Asteroid::Asteroid(double x, double y, double vx, double vy, int angle, float si
 	width = rect->w;
 	height = rect->h;
 
-	radius = (rect->h * .5)*.85;
+	radius = ((double)rect->h * .5);
 	center.x = rect->w * .5;
 	center.y = rect->h * .5;
+
+	if (isCollidable)
+	{
+		rad_img = Game::game_images[Game::eImages::CIRCLE];
+		radius_rect = Game::GetRect(rad_img, pos_x + center.x, pos_y + center.y);
+		radius_rect->w = radius * 2;
+		radius_rect->h = radius * 2;
+		radius_rect->x -= radius;
+		radius_rect->y -= radius;
+	}
 }
 
 
@@ -66,6 +80,12 @@ void Asteroid::Update(double const& dt)
 	{
 		angle += angle_modifier * dt;
 		angle = angle % 360;
+
+		if (debug)
+		{
+			radius_rect->x = pos_x + center.x - radius;
+			radius_rect->y = pos_y + center.y - radius;
+		}
 	}
 }
 
@@ -75,15 +95,20 @@ void Asteroid::Draw()
 
 	if (isCollidable)
 	{
-		SDL_SetTextureColorMod(img, 153, 153, 0);
+		SDL_SetTextureColorMod(img, 255, 255, 255);
 		SDL_RenderCopyEx(Game::gRenderer, img, NULL, rect, angle, &center, SDL_FLIP_NONE);
+		if (debug)
+		{
+			SDL_RenderCopy(Game::gRenderer, rad_img, NULL, radius_rect);
+		}
 	}
 	else
 	{
-		SDL_SetTextureColorMod(img, 255, 255, 255);
+		SDL_SetTextureColorMod(img, 0, 255, 255);
 		SDL_RenderCopy(Game::gRenderer, img, NULL, rect);
 		
 	}
+
 
 }
 
