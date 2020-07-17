@@ -9,6 +9,8 @@ Player::Player(double x, double y, float s_r)
 
 	img = Game::game_images[Game::eImages::SHIP];
 	rect = Game::GetRect(img, x, y);
+	rect->w /=10;
+	rect->h /= 10;
 	rect->w *= s_r;
 	rect->h *= s_r;
 
@@ -31,7 +33,22 @@ Player::Player(double x, double y, float s_r)
 
 void Player::Draw()
 {
-	SDL_RenderCopyEx(Game::gRenderer, img, NULL, rect, angle, &center, SDL_FLIP_NONE);
+	if (damaged)
+	{
+		if (flash.DelayComplete(true))
+		{
+			draw = !draw;
+		}
+
+		if (draw) 
+		{ 
+			SDL_RenderCopyEx(Game::gRenderer, img, NULL, rect, angle, &center, SDL_FLIP_NONE); 
+		}
+	}
+	else
+	{
+		SDL_RenderCopyEx(Game::gRenderer, img, NULL, rect, angle, &center, SDL_FLIP_NONE);
+	}
 
 	if (debug)
 	{

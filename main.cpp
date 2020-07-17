@@ -6,10 +6,10 @@ int main(int argc, char* argv[])
 	// Game 
 	do
 	{
-		Game game{}; // initialize an object of the Game class
-
 		const int FPS = 60;
 		double frame_delay = 1000.0 / FPS;
+
+		Game game{FPS}; // initialize an object of the Game class
 
 		Uint32 frame_start;
 		Uint32 frame_time;
@@ -18,7 +18,6 @@ int main(int argc, char* argv[])
 		if (game.is_running())
 		{
 			game.splash_screen(2.5);
-			std::cout << "Welcome\n\n";
 		}
 
 		game.high_score.Print();
@@ -50,8 +49,6 @@ int main(int argc, char* argv[])
 			}
 		}
 
-		//std::cout << std::endl << "\nDo you want to play again? (y/n): ";
-		//std::cin >> again;
 		again = game.play_again;
 
 	} while (again == 'y');

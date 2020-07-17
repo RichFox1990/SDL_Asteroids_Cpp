@@ -23,12 +23,15 @@ public:
 		current_check = last_success = SDL_GetTicks();
 	}
 
-	bool DelayComplete()
+	bool DelayComplete(bool reset_on_true)
 	{
 		current_check = SDL_GetTicks();
 		if (current_check - last_success >= delay)
 		{
-			last_success = current_check;
+			if (reset_on_true)
+			{
+				last_success = current_check;
+			}
 			return true;
 		}
 		else

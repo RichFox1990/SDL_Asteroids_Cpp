@@ -3,6 +3,14 @@
 ## Creating a custom Asteroids game using SDL2
 
 
+### UPDATE 6 (17/7/20)
+- ADDED sheild bar - default lose 25% each collision (if you loose all sheild and get hit = gameover)
+- ADDED player sprite flashes during collision cooldown after being hit
+- CHANGED background asteroid to more basic image (no need to use standard detailed image due to smaller size)
+- CHANGED Player image slightly (fill with 70% opacity red) + better resolution image
+- FIXED score rect now displays corrently as score increases (no more contraction)
+- ADDED Screenshots
+
 ### UPDATE 5 (16/7/20)
 - NEW Game over screen (displays, score and can replay the game through the main window)
 - NEW asteroid speed calculations
@@ -51,6 +59,7 @@
 - Collision - DONE
 - Score system - intially DONE
 - Wave/levels - intially DONE
+- Lives/ Shield - Sheild 1st pass DONE
+- Add high score in game (replace console implementation)
 - Powerups
-- Lives/ Shield
 - Menus

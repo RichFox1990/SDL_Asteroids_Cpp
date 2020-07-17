@@ -18,12 +18,17 @@ Asteroid::Asteroid(double x, double y, double vx, double vy, int angle, float si
 	this->angle = angle;
 
 	// set to image 1 or 2 depending n the random number given.
-	if (rand_img <= .5)
+	if (rand_img == NULL) // If its a background asteroid - use more basic image
+	{
+		img = Game::game_images[Game::eImages::BG_ASTEROID];
+		rect = Game::GetRect(img, x, y);
+	}
+	else if (rand_img <= .5) // image 1
 	{
 		img = Game::game_images[Game::eImages::ASTEROID1];
 		rect = Game::GetRect(img, x, y);
 	}
-	else
+	else // image 2
 	{
 		img = Game::game_images[Game::eImages::ASTEROID2];
 		rect = Game::GetRect(img, x, y);

@@ -14,7 +14,7 @@ static const double PI = 3.14159265;
 
 class Game {
 public:
-	Game();
+	Game(const int FPS);
 	~Game();
 
 	// Methods
@@ -33,9 +33,10 @@ public:
 
 	bool is_running();
 	void set_running(const bool new_bool);
+
 	bool wave_complete = false;
 	char play_again = NULL;
-
+	int FPS;
 
 	// Enum reference for gImages array of textures
 	struct eImages
@@ -47,6 +48,9 @@ public:
 			SHIP_THRUST,
 			ASTEROID1,
 			ASTEROID2,
+			BG_ASTEROID,
+			SHEILD_BAR,
+			SHEILD_BG_BAR,
 			CIRCLE,
 			TOTAL_IMAGES
 		};
@@ -61,10 +65,11 @@ public:
 		"images/ship_thrust.png",
 		"images/ast1.png",
 		"images/ast2.png",
+		"images/backg_ast.png",
+		"images/sheild_bar.png",
+		"images/sheild_background.png",
 		"images/circle.png",
 	};
-
-	void Create2SubAsteroids(const Asteroid* const ast, std::vector<std::unique_ptr<Entity>>& vector);
 
 private:
 	void init();
@@ -72,6 +77,9 @@ private:
 	void exit_game();
 	void handle_wave_completion();
 	void CreateAsteroid(double x, double y, float size, bool isCollidable, bool allowed_near_player, std::vector<std::unique_ptr<Entity>>& vector, float screen_ratio);
+	void Create2SubAsteroids(const Asteroid* const ast, std::vector<std::unique_ptr<Entity>>& vector);
+	void CreateBackgroundAsteroids(int amount);
+	void HudDraw();
 
 	void Draw();
 
@@ -95,9 +103,11 @@ private:
 
 	int SHIP_THRUST;
 	const int ANGLE_MODIFIER = 35;
+	int original_sheild_length;
+	float current_sheild = 1.0f; // 1 = 100%
 
 	DelayTimer shot_delay{ 200.0f , true};
-	DelayTimer collision_delay{ 3000.0f , false};
+	DelayTimer collision_delay{ 1500.0f , false};
 	DelayTimer wave_delay{ 4000.0f , false};
 
 	std::vector<std::unique_ptr<Entity>> vec_asteroids;
@@ -109,14 +119,21 @@ private:
 	SDL_Color gtext_color = { 255, 255, 255 };	
 	
 	void handle_death();
-	SDL_Texture* LoadRenderedText(std::string textureText, SDL_Color textColor, TTF_Font* font, SDL_Rect& rect);
+	SDL_Texture* LoadRenderedText(SDL_Texture* texture, std::string textureText, SDL_Color& textColor, TTF_Font* font, SDL_Rect& rect);
 	SDL_Texture* load_image_data(std::string path, bool& allMediaLoaded);
 
 	SDL_Texture* gScore = nullptr;
+	SDL_Texture* sheild_amount = nullptr;
+	SDL_Texture* sheild_bg_bar = nullptr;
+	SDL_Rect* sheild_amount_rect;
+	SDL_Rect* sheild_bar_rect;
+
 	SDL_Texture* wComplete = nullptr;
 	SDL_Texture* lComplete = nullptr;
+
 	SDL_Texture* death1 = nullptr;
 	SDL_Texture* death2 = nullptr;
+
 	SDL_Rect death1_rect;
 	SDL_Rect death2_rect;
 	SDL_Rect score_rect;

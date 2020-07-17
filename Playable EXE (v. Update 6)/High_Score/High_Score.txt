@@ -1,3 +1,3 @@
-rich: 11700
-bbbb: 8000
-nat: 5600
+NONE: 0
+NONE: 0
+NONE: 0
