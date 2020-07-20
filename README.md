@@ -3,6 +3,13 @@
 ## Creating a custom Asteroids game using SDL2
 
 
+### UPDATE 7 (20/7/20)
+- ADDED enterable Blackhole to transition to each new level. (see screenshot + playable exe)
+- CODE clear up: moved various variables/ code scopes out of game update and into relevant classes
+- CODE added missed 'const' to methods and arguments
+- VISUAL addition of sheild icon next to sheild bar.
+- BUG added screen ratio checks for text textures (rare circumstances meant they were rendered to big on some screens)
+
 ### UPDATE 6 (17/7/20)
 - ADDED sheild bar - default lose 25% each collision (if you loose all sheild and get hit = gameover)
 - ADDED player sprite flashes during collision cooldown after being hit
@@ -58,7 +65,7 @@
 #### Upcoming
 - Collision - DONE
 - Score system - intially DONE
-- Wave/levels - intially DONE
+- Wave/levels - intially DONE added blackholes (v7)
 - Lives/ Shield - Sheild 1st pass DONE
 - Add high score in game (replace console implementation)
 - Powerups

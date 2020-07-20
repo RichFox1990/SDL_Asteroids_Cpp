@@ -1,8 +1,9 @@
 #include "Player.h"
 #include "Game.h"
 
-Player::Player(double x, double y, float s_r)
+Player::Player(const double x, const double y, const float s_r)
 {
+	current_sheild = 1.0f; // 1 = 100%
 	MAX_SPEED = 350.0 * s_r;
 	pos_x = x;
 	pos_y = y;
@@ -31,17 +32,13 @@ Player::Player(double x, double y, float s_r)
 }
 
 
-void Player::Draw()
+void Player::Draw() const
 {
 	if (damaged)
 	{
-		if (flash.DelayComplete(true))
-		{
-			draw = !draw;
-		}
-
 		if (draw) 
 		{ 
+			// update loop has a timer that changes state of 'draw' while player is damaged to create a flashing effect when the player is hit
 			SDL_RenderCopyEx(Game::gRenderer, img, NULL, rect, angle, &center, SDL_FLIP_NONE); 
 		}
 	}
@@ -57,7 +54,7 @@ void Player::Draw()
 }
 
 
-void Player::Update(double const& dt)
+void Player::Update(const double dt)
 {
 	// Cap velocity and scale if limit reached
 	double distance = sqrt((pow(vel_x, 2) + pow(vel_y, 2)));
@@ -82,12 +79,46 @@ void Player::Update(double const& dt)
 	rect->x = pos_x;
 	rect->y = pos_y;
 
+	// flashing effect timer for draw loop when ship is damaged
+	if (flash.DelayComplete(true))
+	{
+		draw = !draw;
+	}
+
 	if (debug)
 	{
 		radius_rect->x = pos_x + center.x - radius;
 		radius_rect->y = pos_y + center.y - radius;
 	}
+}
 
+void Player::Damage(const float amount)
+{
+	if (current_sheild == 0)
+	{
+		is_dead = true;
+	}
+	else
+	{
+		// reduce sheild
+		damaged = true;
+		current_sheild -= amount/100;
+
+		if (current_sheild < 0)
+		{
+			current_sheild = 0;
+		}
+	}
+}
+
+SDL_Texture* Player::getImage() const
+{
+	return img;
+}
+
+void Player::setImage(SDL_Texture* const new_img)
+{
+	img = new_img;
 }
 
 Player::~Player()

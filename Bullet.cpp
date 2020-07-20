@@ -2,7 +2,7 @@
 #include "Game.h"
 
 
-Bullet::Bullet(Entity* player, float s_r)
+Bullet::Bullet(const Entity* player, const float s_r)
 {
 	MAX_SPEED = 1200.0 * s_r;
 	angle = player->angle;
@@ -22,7 +22,7 @@ Bullet::Bullet(Entity* player, float s_r)
 	center.y = rect->h * .5;
 }
 
-void Bullet::WrapCoords(int sw, int sh)
+void Bullet::WrapCoords(const int sw, const int sh)
 {
 	if (pos_x < 0.0 - width)
 	{
@@ -42,7 +42,7 @@ void Bullet::WrapCoords(int sw, int sh)
 	}
 }
 
-void Bullet::Update(double const& dt)
+void Bullet::Update(const double dt)
 {
 	pos_x += vel_x * dt;
 	pos_y += vel_y * dt;
@@ -51,7 +51,7 @@ void Bullet::Update(double const& dt)
 	rect->y = pos_y;
 }
 
-void Bullet::Draw()
+void Bullet::Draw() const
 {
 	SDL_SetRenderDrawColor(Game::gRenderer, 0, 255, 0, 255);
 	SDL_RenderFillRect(Game::gRenderer, rect);

@@ -21,7 +21,7 @@ void Entity::WrapCoords(int sw, int sh)
 	}
 }
 
-bool Entity::Collision(Entity& other_entity)
+bool Entity::Collision(Entity& other_entity) const
 {
 	//c2 = a2 + b2
 

@@ -1,6 +1,7 @@
 #include "Game.h"
 #include "Asteroid.h"
 #include "Bullet.h"
+#include "BlackHole.h"
 #include <SDL_image.h>
 #include <time.h>
 #include "math.h"
@@ -82,7 +83,7 @@ return "bool" to indicate successful operation or not*/
 }
 
 
-SDL_Texture* Game::load_image_data(std::string path, bool& allMediaLoaded)
+SDL_Texture* Game::load_image_data(const std::string& path, bool& allMediaLoaded)
 // ( Called in the loadMedia() method )
 // This loads the texture of the given path, then converts to the texture and returns the pointer to it.
 {
@@ -116,7 +117,7 @@ SDL_Texture* Game::load_image_data(std::string path, bool& allMediaLoaded)
 }
 
 
-SDL_Rect* Game::GetRect(SDL_Texture* texture, int x, int y)
+SDL_Rect* Game::GetRect(SDL_Texture* const texture, const int x, const int y)
 {
 	int w, h;
 	SDL_QueryTexture(texture, NULL, NULL, &w, &h);
@@ -153,7 +154,7 @@ void Game::load_media()
 }
 
 
-void Game::splash_screen(const int time_to_display)
+void Game::splash_screen(const int time_to_display) const
 // Displays and delays the splash screen logo
 {
 
@@ -165,7 +166,7 @@ void Game::splash_screen(const int time_to_display)
 }
 
 
-SDL_Texture* Game::LoadRenderedText(SDL_Texture* texture, std::string textureText, SDL_Color& textColor, TTF_Font* font, SDL_Rect& rect)
+SDL_Texture* Game::LoadRenderedText(SDL_Texture* texture, const std::string textureText, const SDL_Color& const textColor, TTF_Font* const font, SDL_Rect& const rect, const float s_r)
 {
 	if (texture != nullptr)
 	{
@@ -191,7 +192,7 @@ SDL_Texture* Game::LoadRenderedText(SDL_Texture* texture, std::string textureTex
 		else
 		{
 			
-			rect = SDL_Rect{ rect.x, rect.y, textSurface->w, textSurface->h };
+			rect = SDL_Rect{ rect.x, rect.y, (int)((float)textSurface->w * s_r), (int)((float)textSurface->h * s_r) };
 
 		}
 
@@ -202,7 +203,7 @@ SDL_Texture* Game::LoadRenderedText(SDL_Texture* texture, std::string textureTex
 }
 
 
-void Game::CreateAsteroid(double x, double y, float size, bool isCollidable, bool allowed_near_player, std::vector<std::unique_ptr<Entity>>& vector, float s_r)
+void Game::CreateAsteroid(double x, double y, const float size, const bool isCollidable, const bool allowed_near_player, std::vector<std::unique_ptr<Entity>>& vector, const float s_r)
 {
 	int angle;
 	double vx;
@@ -278,120 +279,168 @@ void Game::Create2SubAsteroids(const Asteroid* const ast, std::vector<std::uniqu
 	vector.push_back(std::make_unique<Asteroid>(ast->pos_x, ast->pos_y, vx2, vy2, ast->angle, ast->size - 2.0, rand_img, ast->isCollidable, s_r));
 }
 
-void Game::CreateBackgroundAsteroids(int amount)
+void Game::CreateBackgroundAsteroids(const int amount)
 {
 	double x, y;
 	for (int i = 0; i < amount/3; i++)
 	{
 		x = (((double)rand() / (double)RAND_MAX)) * Game::SCREEN_WIDTH;;
 		y = (((double)rand() / (double)RAND_MAX)) * Game::SCREEN_HEIGHT;
-		CreateAsteroid(x, y, Asteroid::SMALL - 1, false, true, vec_asteroids, s_r);
+		CreateAsteroid(x, y, Asteroid::SMALL - 1, false, true, vec_bg_asteroids, s_r);
 
 		x = (((double)rand() / (double)RAND_MAX)) * Game::SCREEN_WIDTH;;
 		y = (((double)rand() / (double)RAND_MAX)) * Game::SCREEN_HEIGHT;
-		CreateAsteroid(x, y, Asteroid::MEDIUM - 1, false, true, vec_asteroids, s_r);
+		CreateAsteroid(x, y, Asteroid::MEDIUM - 1, false, true, vec_bg_asteroids, s_r);
 
 		x = (((double)rand() / (double)RAND_MAX)) * Game::SCREEN_WIDTH;;
 		y = (((double)rand() / (double)RAND_MAX)) * Game::SCREEN_HEIGHT;
-		CreateAsteroid(x, y, Asteroid::LARGE - 1, false, true, vec_asteroids, s_r);
+		CreateAsteroid(x, y, Asteroid::LARGE - 1, false, true, vec_bg_asteroids, s_r);
 	}
 }
 
 
 void Game::handle_wave_completion()
 {
+	player->damaged = false;
 	wave_complete = true;
-
-	////if all levels complete
-	//if (level.size() - 1 == current_level)
-	//{
-	//	// load game complete texture 
-	//	if (lComplete == nullptr)
-	//	{
-	//		complete.x = SCREEN_WIDTH / 2 - complete.w / 2;
-	//		complete.y = SCREEN_HEIGHT / 2 - complete.h / 2;
-	//		//wave_delay.last_success = wave_delay.current_check = SDL_GetTicks();
-	//		lComplete = LoadRenderedText("GAME COMPLETE - WIP", gtext_color, l_font, complete);
-	//	}
-	//	std::cout << "YOU WON" << std::endl;
-	//	// Push scores is in top 3
-	//	if (score > high_score.top3[2].second)
-	//	{
-	//		std::string name;
-	//		std::cout << "\nYou scored in the top 3. Please type your name(no spaces): " << std::endl;
-	//		SDL_RenderCopy(gRenderer, lComplete, NULL, &complete);
-	//		SDL_RenderPresent(gRenderer);
-	//		std::cin >> name;
-	//		high_score.PushScore(name, score);
-	//		high_score.Print();
-	//		set_running(false);
-	//	}
-	//	else
-	//	{
-	//		std::cout << "\nYou didn't score in the top 3. Better luck next time\n" << std::endl;
-	//		high_score.Print();
-	//		SDL_RenderCopy(gRenderer, lComplete, NULL, &complete);
-	//		SDL_RenderPresent(gRenderer);
-	//		//SDL_Delay(3000.0);
-	//		set_running(false);
-	//	}
-
-	//	SDL_DestroyTexture(lComplete);
-	//	lComplete = nullptr;
-	//	
-	//}
-	// //if more levels to go
-	//else if (level.size() - 1 > current_level)
-
+	bool wave_transition = true;
 	// Simple endless mode
-	wComplete = LoadRenderedText(wComplete, "WAVE " + std::to_string(current_level) + " COMPLETE", gtext_color, l_font, complete);
+	wComplete = LoadRenderedText(wComplete, "WAVE " + std::to_string(current_level) + " COMPLETE", gtext_color, l_font, complete, s_r);
+	complete.w *= .6;
+	complete.h *= .6;
 	complete.x = SCREEN_WIDTH / 2 - complete.w / 2;
-	complete.y = SCREEN_HEIGHT / 2 - complete.h / 2;
-	double x, y;
+	complete.y = SCREEN_HEIGHT / 6 - complete.h / 2;
+
+
+	BlackHole BlkHole{ SCREEN_WIDTH, SCREEN_HEIGHT, 1, s_r };
+	while (SDL_HasIntersection(BlkHole.rect, player->rect) == SDL_TRUE)
+	{
+		BlkHole.NewPosition(SCREEN_WIDTH, SCREEN_HEIGHT);
+	}
+	float temp_dt = 1000 / FPS;
+	DelayTimer delta(temp_dt, false);
+	Player temp_player{ player->pos_x, player->pos_y, s_r };
+	double vec_x;
+	double vec_y;
+	float time_elapsed = 0;
+	bool delay_reset = false;
+
+	while (wave_transition)
+	{
+		if (delta.DelayComplete(true))
+		{
+			SDL_SetRenderDrawColor(gRenderer, 0, 0, 0, 255);
+			SDL_RenderClear(gRenderer);
+			BlkHole.Update(temp_dt / 1000);
+			BlkHole.Draw();
+			for (auto& ast : vec_bg_asteroids)
+			{
+				ast->Update(temp_dt / 1000);
+				ast->WrapCoords(SCREEN_WIDTH, SCREEN_HEIGHT);
+				ast->Draw();
+			}
+
+			if (!(player->Collision(BlkHole)))
+			{
+				handle_input(temp_dt / 1000);
+				player->Update(temp_dt / 1000);
+				player->WrapCoords(SCREEN_WIDTH, SCREEN_HEIGHT);
+				player->Draw();
+			}
+			else
+			{
+				if (!delay_reset)
+				{
+					player->vel_x = 0;
+					player->vel_y = 0;
+					wave_delay.Reset();
+					delay_reset = true;
+					temp_player.rect->x = temp_player.pos_x = player->rect->x;
+					temp_player.rect->y = temp_player.pos_y = player->rect->y;
+
+					vec_y = ((BlkHole.pos_y + BlkHole.rect->h/2) - (player->pos_y + player->center.y));// / distance;
+					vec_x = ((BlkHole.pos_x + BlkHole.rect->w/2) - (player->pos_x + player->center.x));// / distance;
+					double distance = sqrt((pow(vec_x, 2) + pow(vec_y, 2)));
+
+				}
+				if (!wave_delay.DelayComplete(false))
+				{
+					//SDL_RenderCopyEx(Game::gRenderer, temp_player.img, NULL, temp_player.rect, temp_player.angle, &temp_player.center, SDL_FLIP_NONE);
+					temp_player.rect->w *= .98;
+					temp_player.rect->h *= .98;
+					temp_player.center.x = temp_player.rect->w / 2;
+					temp_player.center.y = temp_player.rect->h / 2;
+					time_elapsed += temp_dt/1000.0f;
+					temp_player.rect->x = player->pos_x + (vec_x * (time_elapsed));
+					temp_player.rect->y = player->pos_y + (vec_y * (time_elapsed));
+					vec_x > 0 ? temp_player.to_rotate -= 1 : temp_player.to_rotate += 1;
+					temp_player.angle += temp_player.to_rotate * temp_dt;
+					temp_player.angle = temp_player.angle % 360;
+					temp_player.Draw();
+				}
+				else
+				{
+					player->pos_x = player->rect->x = temp_player.pos_x;
+					player->pos_y = player->rect->y = temp_player.pos_y;
+					wave_transition = false;
+				}
+				
+			}
+			SDL_RenderCopy(gRenderer, wComplete, NULL, &complete);
+			SDL_RenderPresent(gRenderer);
+		}
+	}
+
+	// spawn new asteroids
 	current_level++;
+	double x, y;
 	for (int i = 0; i < asteroid_amount + current_level; i++)
 	{
 		x = (((double)rand() / (double)RAND_MAX)) * Game::SCREEN_WIDTH;
 		y = (((double)rand() / (double)RAND_MAX)) * Game::SCREEN_HEIGHT;
 		CreateAsteroid(x, y, Asteroid::LARGE, true, false, vec_asteroids, s_r);
 	}
-	wave_delay.Reset();
-	while (!wave_delay.DelayComplete(true))
-	{
-		SDL_RenderCopy(gRenderer, wComplete, NULL, &complete);
-		SDL_RenderPresent(gRenderer);
-	}
-
 	SDL_DestroyTexture(wComplete);
 	wComplete = nullptr;
+}
+
+void Game::NextLevelTransition(const int center_x, const int center_y)
+{
+
 }
 
 
 void Game::handle_death()
 {
 	// render text textures and rects
-
-	death1 = LoadRenderedText(death1, "YOU DIED", gtext_color, l_font, death1_rect);
-	death2 = LoadRenderedText(death2, "Play again? (y/n)", gtext_color, g_font, death2_rect);
+	death1 = LoadRenderedText(death1, "YOU DIED", gtext_color, l_font, death1_rect, s_r);
+	death2 = LoadRenderedText(death2, "Play again? (y/n)", gtext_color, g_font, death2_rect, s_r);
 	death1_rect.x = SCREEN_WIDTH / 2 - death1_rect.w / 2;
 	death1_rect.y = SCREEN_HEIGHT / 4 - death1_rect.h / 2;
 	death2_rect.x = SCREEN_WIDTH / 2 - death2_rect.w / 2;
 	death2_rect.y = SCREEN_HEIGHT - SCREEN_HEIGHT / 4 - death2_rect.h / 2;
 
 	score_rect = death1_rect;
-
 	score_rect.y = SCREEN_HEIGHT/2 - score_rect.h/2;
+
 	float temp_dt = 1000/FPS;
 	double zero_dt = 0.0;
 	DelayTimer delta(temp_dt, false);
 	// new game loop where everything updates and render at set FPS
 	while (play_again == NULL)
 	{
+		player->damaged = true;
 		if (delta.DelayComplete(true))
 		{
 			SDL_SetRenderDrawColor(gRenderer, 0, 0, 0, 255);
 			SDL_RenderClear(gRenderer);
 			handle_input(zero_dt);
+			for (auto& ast : vec_bg_asteroids)
+			{
+				ast->Update(temp_dt / 1000);
+				ast->WrapCoords(SCREEN_WIDTH, SCREEN_HEIGHT);
+				ast->Draw();
+			}
 			for (auto& ast : vec_asteroids)
 			{
 				if (ast.get() != player->asteroid_death->get())
@@ -418,9 +467,8 @@ void Game::handle_death()
 }
 
 
-void Game::handle_input(double& dt)
+void Game::handle_input(const double dt)
 {
-	//dt > 2 ? dt = 0 : dt = dt;
 	while (SDL_PollEvent(&events) != 0)
 	{
 		if (events.type == SDL_QUIT)
@@ -436,7 +484,10 @@ void Game::handle_input(double& dt)
 			case SDLK_SPACE:
 				break;
 			case SDLK_w:
-				player->img = Game::game_images[Game::eImages::SHIP_THRUST];
+				if ((player->getImage() != Game::game_images[Game::eImages::SHIP_THRUST] && (!player->is_dead)))
+				{
+					player->setImage(Game::game_images[Game::eImages::SHIP_THRUST]);
+				}
 				break;
 			case SDLK_i:
 				player->debug = !(player->debug);
@@ -446,7 +497,10 @@ void Game::handle_input(double& dt)
 				}
 				break;
 			case SDLK_UP:
-				player->img = Game::game_images[Game::eImages::SHIP_THRUST];
+				if (player->getImage() != Game::game_images[Game::eImages::SHIP_THRUST])
+				{
+					player->setImage(Game::game_images[Game::eImages::SHIP_THRUST]);
+				}
 				break;
 			case SDLK_y:
 				if (player->is_dead)
@@ -471,10 +525,10 @@ void Game::handle_input(double& dt)
 			switch (events.key.keysym.sym)
 			{
 			case SDLK_w:
-				player->img = Game::game_images[Game::eImages::SHIP];
+				player->setImage(Game::game_images[Game::eImages::SHIP]);
 				break;
 			case SDLK_UP:
-				player->img = Game::game_images[Game::eImages::SHIP];
+				player->setImage(Game::game_images[Game::eImages::SHIP]);
 				break;
 			case SDLK_a:
 				player->to_rotate = 0;
@@ -503,17 +557,12 @@ void Game::handle_input(double& dt)
 	if (keystates[SDL_SCANCODE_A] || keystates[SDL_SCANCODE_LEFT])
 	{
 		player->to_rotate -= ANGLE_MODIFIER;
-		//player->angle -= 
-		//player->angle = player->angle % 360;
 	}
 	if (keystates[SDL_SCANCODE_D] || keystates[SDL_SCANCODE_RIGHT])
 	{
 		player->to_rotate += ANGLE_MODIFIER;
-
-		//player->angle += ANGLE_MODIFIER * dt;
-		//player->angle = player->angle % 360;
 	}
-	if (keystates[SDL_SCANCODE_SPACE] && (vec_asteroids.size() > 45))
+	if (keystates[SDL_SCANCODE_SPACE] && (vec_asteroids.size() > 0))
 	{
 		if (shot_delay.DelayComplete(true))
 		{
@@ -523,49 +572,50 @@ void Game::handle_input(double& dt)
 }
 
 
-void Game::Update(double& dt)
+void Game::Update(const double dt)
 // Main object update loop for the game
 {
+	// update background asteroids
+	if (vec_bg_asteroids.size() != 0)
+	{
+		for (auto& ast : vec_bg_asteroids)
+		{
+			ast->Update(dt);
+			ast->WrapCoords(SCREEN_WIDTH, SCREEN_HEIGHT);
+		}
+	}
 	// check collisions between player and asteroids
 	if (vec_asteroids.size() != 0)
 	{
 		for (auto& ast : vec_asteroids)
 		{
-			if (ast->isCollidable)
+			if ((player->Collision(*ast)) && (collision_delay.DelayComplete(true)))
 			{
-				if ((player->Collision(*ast)) && (collision_delay.DelayComplete(true)))
-				{
-					score -= 500;
-					if (score < 0) {score = 0; }
-					gScore = LoadRenderedText(gScore, "SCORE: " + std::to_string(score), gtext_color, g_font, score_rect);
+				score -= 500;
+				if (score < 0) {score = 0; }
+				// re render the HUD score texture
+				gScore = LoadRenderedText(gScore, "SCORE: " + std::to_string(score), gtext_color, g_font, score_rect, s_r);
 
-					if (current_sheild == 0)
+				player->Damage(25.0f);
+				sheild_amount_rect->w = original_sheild_length * player->current_sheild;
+
+				if (player->is_dead)
+				{
+					if (score > high_score.top3[2].second)
 					{
-						if (score > high_score.top3[2].second)
-						{
-							std::string name;
-							std::cout << "\nYou scored in the top 3. Please type your name(no spaces): " << std::endl;
-							std::cin >> name;
-							std::cout << std::endl;
-							high_score.PushScore(name, score);
-							high_score.Print();
-						}
-						else
-						{
-							std::cout << "\nYou didn't score in the top 3. Better luck next time\n" << std::endl;
-						}
-						player->is_dead = true;
-						player->asteroid_death = &ast;
-						handle_death();
+						std::string name;
+						std::cout << "\nYou scored in the top 3. Please type your name(no spaces): " << std::endl;
+						std::cin >> name;
+						std::cout << std::endl;
+						high_score.PushScore(name, score);
+						high_score.Print();
 					}
 					else
 					{
-						// reduce sheild
-						player->damaged = true;
-						current_sheild -= .25;
-						if (current_sheild < 0) { current_sheild = 0; }
-						sheild_amount_rect->w = original_sheild_length * current_sheild;
+						std::cout << "\nYou didn't score in the top 3. Better luck next time\n" << std::endl;
 					}
+					player->asteroid_death = &ast;
+					handle_death();
 				}
 			}
 
@@ -577,6 +627,8 @@ void Game::Update(double& dt)
 	// Update player and Wrap coords
 	player->Update(dt);
 	player->WrapCoords(SCREEN_WIDTH, SCREEN_HEIGHT);
+
+	// if the player is currently damaged, monitor the collision delay timer and reset the 'damaged' bool to false when delay completed
 	if (player->damaged)
 	{
 		if (collision_delay.DelayComplete(false))
@@ -590,37 +642,35 @@ void Game::Update(double& dt)
 	{
 		// create temp vector to store any newly spawned asteroids (so we dont crash the vector we are iterating over)
 		std::vector<std::unique_ptr<Entity>> vec_tempAsteroids;
+		vec_tempAsteroids.reserve(2);
 
 		//loop through bullets
 		for (auto& bul : vec_bullets)
 		{
-			// for each bullet check collision with all collidable asteroids
+			// for each bullet check collision with all main asteroids
 			if (vec_asteroids.size() != 0)
 			{
 				for (auto& ast : vec_asteroids)
 				{
-					if (ast->isCollidable)
+					// if collision
+					if (bul->Collision(*ast))
 					{
-						// if collision
-						if (bul->Collision(*ast))
+						bul->is_dead = true;
+						ast->is_dead = true;
+						score += 100;
+						gScore = LoadRenderedText(gScore, "SCORE: " + std::to_string(score), gtext_color, g_font, score_rect, s_r);
+						if (ast->size > Asteroid::SMALL)
 						{
-							bul->is_dead = true;
-							ast->is_dead = true;
-							score += 100;
-							gScore = LoadRenderedText(gScore, "SCORE: " + std::to_string(score), gtext_color, g_font, score_rect);
-							if (ast->size > Asteroid::SMALL)
-							{
-								Create2SubAsteroids((Asteroid*)(ast.get()), vec_tempAsteroids);
-							}
-							break;
+							Create2SubAsteroids((Asteroid*)(ast.get()), vec_tempAsteroids);
 						}
+						break;
 					}
 				}
-				// update bullet location
-				bul->Update(dt);
-				// check if bullet is outside of screen (set isDead to trye if it is outside screen)
-				bul->WrapCoords(SCREEN_WIDTH, SCREEN_HEIGHT);
 			}
+			// update bullet location
+			bul->Update(dt); 
+			// check if bullet is outside of screen (if so, set is_dead to true)
+			bul->WrapCoords(SCREEN_WIDTH, SCREEN_HEIGHT);
 		}
 
 		// merge any new spawned asteroids into the main vector
@@ -637,14 +687,14 @@ void Game::Update(double& dt)
 
 	// IF KILLED ALL ASTEROIDS
 	// if only background asteroids remain and no bullets on screen
-	if ((vec_asteroids.size() == 45) && (vec_bullets.empty()))
+	if ((vec_asteroids.size() == 0) && (vec_bullets.empty()))
 	{	
 		handle_wave_completion();
 	}
 }
 
 
-void Game::render()
+void Game::render() const
 {
 	SDL_SetRenderDrawColor(gRenderer, 0, 0, 0, 255);
 	SDL_RenderClear(gRenderer);
@@ -654,9 +704,18 @@ void Game::render()
 }
 
 
-void Game::Draw()
+void Game::Draw() const
 // Draws the various shapes onto the screen
 {
+	// draw background asteroids
+	if (vec_bg_asteroids.size() != 0)
+	{
+		for (auto& ast : vec_bg_asteroids)
+		{
+			ast->Draw();
+		}
+	}
+	// draw main asteroids
 	if (vec_asteroids.size() != 0)
 	{
 		for (auto& ent : vec_asteroids)
@@ -664,7 +723,7 @@ void Game::Draw()
 			ent->Draw();
 		}
 	}
-
+	// draw bullets
 	if (vec_bullets.size() != 0)
 	{
 		for (auto& ent : vec_bullets)
@@ -672,15 +731,18 @@ void Game::Draw()
 			ent->Draw();
 		}
 	}
+	//draw player
 	player->Draw();
+	//draw HUD
 	HudDraw();
 }
 
-void Game::HudDraw()
+void Game::HudDraw() const
 {
 	SDL_RenderCopy(Game::gRenderer, sheild_bg_bar, NULL, sheild_bar_rect);
 	SDL_SetRenderDrawColor(Game::gRenderer, 204, 255, 255, 255);
 	SDL_RenderFillRect(Game::gRenderer, sheild_amount_rect);
+	SDL_RenderCopy(Game::gRenderer, sheild_icon, NULL, sheild_icon_rect);
 }
 
 
@@ -698,7 +760,8 @@ Game::Game(const int FPS)
 	screen_center_x = SCREEN_WIDTH / 2;
 	screen_center_y = SCREEN_HEIGHT / 2;
 
-	vec_asteroids.reserve(60);
+	vec_bg_asteroids.reserve(45);
+	vec_asteroids.reserve(50);
 	vec_bullets.reserve(20);
 
 	// create background asteroids
@@ -717,29 +780,36 @@ Game::Game(const int FPS)
 	}
 
 	//load text texture for score
-	gScore = LoadRenderedText(gScore, "SCORE: " + std::to_string(score), gtext_color, g_font, score_rect);
+	gScore = LoadRenderedText(gScore, "SCORE: " + std::to_string(score), gtext_color, g_font, score_rect, s_r);
 	//scale rect
+	score_rect.w *= s_r;
+	score_rect.h *= s_r;
 	score_rect.x = SCREEN_WIDTH/2 - score_rect.w / 2;
 	score_rect.y += 10 * s_r;
 
+	//set sheild icon image
+	sheild_icon = Game::game_images[Game::eImages::SHEILD];
 	//set image for sheild HUD
 	sheild_bg_bar = Game::game_images[Game::eImages::SHEILD_BG_BAR];
 	// get the rects
-	sheild_bar_rect = GetRect(sheild_amount, 18.0f * s_r, 18.0f * s_r);
-	sheild_amount_rect = GetRect(sheild_amount, 28.0f * s_r, 28.0f * s_r);
+	sheild_icon_rect = Game::GetRect(sheild_icon, 25.0f * s_r, 5.0f * s_r);
+	sheild_bar_rect = GetRect(sheild_amount, 45.0f * s_r, 18.0f * s_r);
+	sheild_amount_rect = GetRect(sheild_amount, 55.0f * s_r, 28.0f * s_r);
 	// scale using screen height and width
 	sheild_bar_rect->h = SCREEN_HEIGHT / 25;
 	sheild_bar_rect->w = SCREEN_WIDTH / 2.5;
+	sheild_icon_rect->h = sheild_bar_rect->h * 1.5;
+	sheild_icon_rect->w = sheild_icon_rect->h * (150.0f/180.0f);
 	sheild_amount_rect->h = sheild_bar_rect->h - 20.0f * s_r;
 	sheild_amount_rect->w = sheild_bar_rect->w - 20.0f * s_r;
 	// save original size
 	original_sheild_length = sheild_amount_rect->w;
 	// scale the shown sheild amount by current sheild amount (1 = 100%, 0.5 = 50% etc)
-	sheild_amount_rect->w = original_sheild_length * current_sheild;
+	sheild_amount_rect->w = original_sheild_length * player->current_sheild;
 }
 
 
-bool Game::is_running()
+bool Game::is_running() const
 // Gets the game's current "running" loop condition
 {
 	return running;

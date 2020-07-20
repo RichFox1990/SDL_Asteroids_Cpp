@@ -10,14 +10,19 @@ public:
 	bool debug = false;
 	bool damaged = false;
 	int to_rotate = 0;
-
-	Player(double x, double y, float screen_ratio);
-
-	void Draw() override;
-	void Update(double const& dt) override;
+	float current_sheild;
 	SDL_Texture* img = nullptr;
 	std::unique_ptr<Entity>* asteroid_death = nullptr;
-	~Player(); // clear rects
+
+	Player(const double x, const double y, const float screen_ratio);
+
+	void Draw() const override;
+	void Update(const double dt) override;
+	SDL_Texture* getImage() const;
+	void setImage(SDL_Texture* const new_img);
+	void Damage(const float amount);
+
+	~Player();
 
 private:
 	SDL_Texture* rad_img = nullptr;

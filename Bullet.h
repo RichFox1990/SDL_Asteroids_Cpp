@@ -1,13 +1,14 @@
 #pragma once
 #include "Entity.h"
+
 class Bullet : public Entity
 {
 public:
 
-	Bullet(Entity* player, float s_r);
-	void WrapCoords(int screen_width, int screen_height);
-	void Draw() override;
-	void Update(double const& dt) override;
+	Bullet(const Entity* player, const float s_r);
+	void WrapCoords(const int screen_width, const int screen_height);
+	void Draw() const override;
+	void Update(const double dt) override;
 	~Bullet();
 
 private:

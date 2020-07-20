@@ -13,7 +13,7 @@ HighScore::HighScore()
 	input.close();
 }
 
-void HighScore::PushScore(std::string name, int score)
+void HighScore::PushScore(std::string name, const int score)
 {
 	name = name + ":";
 	if (score > top3[0].second)

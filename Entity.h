@@ -5,20 +5,17 @@ class Entity
 {
 public:
 	Entity() {}
-	//virtual ~Entity() {};
 	// Methods
-	virtual bool Collision(Entity& other_entity);
+	virtual bool Collision(Entity& other_entity) const;
 	virtual void WrapCoords(int screen_width, int screen_height);
-	virtual void Update(double const& dt) = 0;
-	virtual void Draw() = 0;
-
+	virtual void Update(double const dt) = 0;
+	virtual void Draw() const = 0;
 
 	//Variables
 	int angle = 0;
 	int width = 0;
 	int height = 0;
 	float size = 0.0f; // used for asteroids
-	//SDL_Texture* img = nullptr;
 
 	bool is_dead = false;
 	bool isCollidable = true;

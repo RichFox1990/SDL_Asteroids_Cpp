@@ -1,8 +1,8 @@
 #include "Asteroid.h"
 #include "Game.h"
-#include "stdlib.h"
+//#include "stdlib.h"
 
-Asteroid::Asteroid(double x, double y, double vx, double vy, int angle, float size, double rand_img, bool isCollidable, float s_r)
+Asteroid::Asteroid(const double x, const double y, const double vx, const double vy, const int angle, float size, const double rand_img, const bool isCollidable, const float s_r)
 {
 	MAX_SPEED = 350.0 * s_r;
 	//set position and velocity
@@ -33,8 +33,10 @@ Asteroid::Asteroid(double x, double y, double vx, double vy, int angle, float si
 		img = Game::game_images[Game::eImages::ASTEROID2];
 		rect = Game::GetRect(img, x, y);
 	}
+	// scale 320x320 image down to 32x32
 	rect->w /= 10;
 	rect->h /= 10;
+	// scale by original game size / captured screen ratio
 	rect->w *= s_r;
 	rect->h *= s_r;
 
@@ -53,10 +55,10 @@ Asteroid::Asteroid(double x, double y, double vx, double vy, int angle, float si
 		rect->h /= size;
 		angle_modifier = 0; // no need to waste resources altering angle each frame for tiny background entities
 	}
-
+	// set width/height variables
 	width = rect->w;
 	height = rect->h;
-
+	// set radius (for collisions) 
 	radius = ((double)rect->h * .5);
 	center.x = rect->w * .5;
 	center.y = rect->h * .5;
@@ -73,7 +75,7 @@ Asteroid::Asteroid(double x, double y, double vx, double vy, int angle, float si
 }
 
 
-void Asteroid::Update(double const& dt)
+void Asteroid::Update(const double dt)
 {
 	pos_x += vel_x * dt;
 	pos_y += vel_y * dt;
@@ -95,7 +97,7 @@ void Asteroid::Update(double const& dt)
 }
 
 
-void Asteroid::Draw()
+void Asteroid::Draw() const
 {
 
 	if (isCollidable)
