@@ -55,6 +55,7 @@ public:
 			SHEILD_BG_BAR,
 			CIRCLE,
 			B_BLACK_HOLE,
+			OUTER_PICKUP,
 			TOTAL_IMAGES
 		};
 	};
@@ -73,7 +74,8 @@ public:
 		"images/sheild_bar.png",
 		"images/sheild_background.png",
 		"images/circle.png",
-		"images/blueblackhole.png"
+		"images/blueblackhole.png",
+		"images/outer_pickup.png"
 	};
 
 private:
@@ -114,7 +116,8 @@ private:
 	int screen_center_y;
 
 	int SHIP_THRUST;
-	const int ANGLE_MODIFIER = 35;
+	const int MAX_ANGLE_MOD = 36;
+	int ANGLE_MODIFIER = MAX_ANGLE_MOD;
 	int original_sheild_length;
 
 	bool running = true;

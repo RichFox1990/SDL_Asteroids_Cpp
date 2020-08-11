@@ -481,8 +481,6 @@ void Game::handle_input(const double dt)
 		{
 			switch (events.key.keysym.sym)
 			{
-			case SDLK_SPACE:
-				break;
 			case SDLK_w:
 				if ((player->getImage() != Game::game_images[Game::eImages::SHIP_THRUST] && (!player->is_dead)))
 				{
@@ -562,6 +560,13 @@ void Game::handle_input(const double dt)
 	{
 		player->to_rotate += ANGLE_MODIFIER;
 	}
+	if (keystates[SDL_SCANCODE_LSHIFT] || keystates[SDL_SCANCODE_RSHIFT])
+	{
+		//ANGLE_MODIFIER = MAX_ANGLE_MOD /10;
+		if (player->to_rotate != 0)
+			player->to_rotate = player->to_rotate % (MAX_ANGLE_MOD*5);
+	}
+
 	if (keystates[SDL_SCANCODE_SPACE] && (vec_asteroids.size() > 0))
 	{
 		if (shot_delay.DelayComplete(true))
@@ -782,8 +787,8 @@ Game::Game(const int FPS)
 	//load text texture for score
 	gScore = LoadRenderedText(gScore, "SCORE: " + std::to_string(score), gtext_color, g_font, score_rect, s_r);
 	//scale rect
-	score_rect.w *= s_r;
-	score_rect.h *= s_r;
+	//score_rect.w *= s_r;
+	//score_rect.h *= s_r;
 	score_rect.x = SCREEN_WIDTH/2 - score_rect.w / 2;
 	score_rect.y += 10 * s_r;
 

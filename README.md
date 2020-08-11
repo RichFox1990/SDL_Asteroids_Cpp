@@ -3,6 +3,11 @@
 ## Creating a custom Asteroids game using SDL2
 
 
+### UPDATE 8 (11/8/20)
+- ADDED control - Hold LSHIFT or RSHIFT to limit your rotation for higher accuracy shooting.
+- FIXED size bug for scoreboard on smaller resolution displays
+- ADDED initial skeleton code for powerup class system (upcoming upgrades)
+
 ### UPDATE 7 (20/7/20)
 - ADDED enterable Blackhole to transition to each new level. (see screenshot + playable exe)
 - CODE clear up: moved various variables/ code scopes out of game update and into relevant classes
