@@ -2,7 +2,7 @@
 
 ## Creating a custom Asteroids game using SDL2
 
-[![UPDATE 9](/images/UPDATE-9-particles.png)]("Particle_Effects")
+[![UPDATE 9](/Screenshots/UPDATE-9-particles.png)]("Particle_Effects")
 
 ### UPDATE 9 (22/8/20)
 - ADDED particles upon destroying asteroids (velocity and direction dependant on asteroids)
