@@ -4,13 +4,14 @@
 
 Bullet::Bullet(const Entity* player, const float s_r)
 {
-	MAX_SPEED = 1200.0 * s_r;
+
+	MAX_SPEED = 1000 * s_r;
 	angle = player->angle;
 	pos_x = sin((double)angle * PI / 180.0) * player->height / 4 + player->rect->x + player->width / 2;
 	pos_y = -cos((double)angle * PI / 180.0) * player->height / 4 + player->rect->y + player->height / 2;
 
 	// bullet rect (5x5)
-	rect = new SDL_Rect{ (int)pos_x, (int)pos_y, (int)(5.0 * s_r), (int)(5.0 * s_r) };
+	rect = new SDL_Rect{ (int)pos_x, (int)pos_y, (int)((Asteroid::SMALL * 3.0f) * s_r), (int)((Asteroid::SMALL * 3.0f) * s_r) };
 	width = rect->w;
 	height = rect->h;
 	// set bullet velocity

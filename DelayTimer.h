@@ -18,6 +18,11 @@ public:
 		}
 	}
 
+	void SetNewDelay(const float new_delay)
+	{
+		this->delay = new_delay;
+	}
+
 	void Reset()
 	{
 		current_check = last_success = SDL_GetTicks();

@@ -2,68 +2,77 @@
 
 ## Creating a custom Asteroids game using SDL2
 
+[![UPDATE 9](/images/UPDATE-9-particles.png)]("Particle_Effects")
+
+### UPDATE 9 (22/8/20)
+- ADDED particles upon destroying asteroids (velocity and direction dependant on asteroids)
+- ADDED thrust particles
+- CHANGED / lowered overall scale of game - playing area greatly increased due to this.
+- CHANGED how asteroid speed and direction is calculated. No guaranteed slow asteroid created from destroying slow parent asteroid.
+- ADDED sounds - courtesy of mine and my gf's talented vocal chords :)
+- Min and Max asteroid speed increases per level.
 
 ### UPDATE 8 (11/8/20)
 - ADDED control - Hold LSHIFT or RSHIFT to limit your rotation for higher accuracy shooting.
-- FIXED size bug for scoreboard on smaller resolution displays
+- FIXED size bug for scoreboard on smaller resolution displays.
 - ADDED initial skeleton code for powerup class system (upcoming upgrades)
 
 ### UPDATE 7 (20/7/20)
-- ADDED enterable Blackhole to transition to each new level. (see screenshot + playable exe)
-- CODE clear up: moved various variables/ code scopes out of game update and into relevant classes
-- CODE added missed 'const' to methods and arguments
+- ADDED enterable Blackhole to transition to each new level. (see screenshot + playable exe).
+- CODE clear up: moved various variables/ code scopes out of game update and into relevant classes.
+- CODE added missed 'const' to methods and arguments.
 - VISUAL addition of sheild icon next to sheild bar.
-- BUG added screen ratio checks for text textures (rare circumstances meant they were rendered to big on some screens)
+- BUG added screen ratio checks for text textures (rare circumstances meant they were rendered to big on some screens).
 
 ### UPDATE 6 (17/7/20)
-- ADDED sheild bar - default lose 25% each collision (if you loose all sheild and get hit = gameover)
-- ADDED player sprite flashes during collision cooldown after being hit
-- CHANGED background asteroid to more basic image (no need to use standard detailed image due to smaller size)
-- CHANGED Player image slightly (fill with 70% opacity red) + better resolution image
-- FIXED score rect now displays corrently as score increases (no more contraction)
+- ADDED sheild bar - default lose 25% each collision (if you loose all sheild and get hit = gameover).
+- ADDED player sprite flashes during collision cooldown after being hit.
+- CHANGED background asteroid to more basic image (no need to use standard detailed image due to smaller size).
+- CHANGED Player image slightly (fill with 70% opacity red) + better resolution image.
+- FIXED score rect now displays corrently as score increases (no more contraction).
 - ADDED Screenshots
 
 ### UPDATE 5 (16/7/20)
-- NEW Game over screen (displays, score and can replay the game through the main window)
-- NEW asteroid speed calculations
-- ADDED press 'i' to view collision circles. (please report any strange sizes wit ha pic and your resolution settings)
-- Split asteroids inhert speed from parent asteroid when created (with offset split angle)
-- New asteroid images
+- NEW Game over screen (displays, score and can replay the game through the main window).
+- NEW asteroid speed calculations.
+- ADDED press 'i' to view collision circles. (please report any strange sizes wit ha pic and your resolution settings).
+- Split asteroids inhert speed from parent asteroid when created (with offset split angle).
+- New asteroid images.
 
 ### UPDATE 5
-- Split Asteroids velocity now calculated based on existing parent asteroid velocity + offset (more natural physics)
-- Added angle acceleration (better precision when tapping)
-- Default endless mode
-- Bugfix: bullet can no longer destroy more than 1 asteroid in certain circumstances)
+- Split Asteroids velocity now calculated based on existing parent asteroid velocity + offset (more natural physics).
+- Added angle acceleration (better precision when tapping).
+- Default endless mode.
+- Bugfix: bullet can no longer destroy more than 1 asteroid in certain circumstances).
 - Code: Tidy up and fixed memory leak.
 
 ### UPDATE 4
-- Added ship thrust visualisation
-- Added wave system (currently 5 waves)
-- HUD Display and delay when wave complete
-- Code cleanup
-- Added standalone playable game folder (exe, dll + assets included)
-- New splash screen
-- Screenshot folder
+- Added ship thrust visualisation.
+- Added wave system (currently 5 waves).
+- HUD Display and delay when wave complete.
+- Code cleanup.
+- Added standalone playable game folder (exe, dll + assets included).
+- New splash screen.
+- Screenshot folder.
 
 ### UPDATE 3
-- Added high score.txt that keeps track of your highest 3 scores
-- Added Score display to screen
+- Added high score.txt that keeps track of your highest 3 scores.
+- Added Score display to screen.
 - Added Spawning protection around player when spawning new asteroids. 
 
 ### UPDATE 2
 - Game auto grabs screen resolution and uses 70% height and scales the game occordingly.
 - Tidied up code and updated classes/methods to intergrate the scaling algorythmn.
-- Added quick respawn of asteroids after destroying them all (Player pos checks and level progression to add)
+- Added quick respawn of asteroids after destroying them all (Player pos checks and level progression to add).
 
 ### UPDATE 1
-- Added collision for bullets, player and asteroids (3sec delay before activation at level start)
-- Change inplemetation of 'CreateAsteroid' function
-- Larger asteroids break into 2 smaller chunks upon bullet collision
+- Added collision for bullets, player and asteroids (3sec delay before activation at level start).
+- Change inplemetation of 'CreateAsteroid' function.
+- Larger asteroids break into 2 smaller chunks upon bullet collision.
 
 ### Initial Commit
 - Ship math and controls complete.
-- Bullets complete. (delay based on level to be implemented)
+- Bullets complete. (delay based on level to be implemented).
 - Asteroid creation and math complete.
 
 ### ONGOING PROJECT
@@ -73,5 +82,6 @@
 - Wave/levels - intially DONE added blackholes (v7)
 - Lives/ Shield - Sheild 1st pass DONE
 - Add high score in game (replace console implementation)
+- Sounds - DONE
 - Powerups
 - Menus

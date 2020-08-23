@@ -10,11 +10,12 @@
 SDL_Event Game::events;
 
 SDL_Texture* Game::game_images[eImages::TOTAL_IMAGES];
+Mix_Chunk* Game::game_sounds[eSounds::TOTAL_SOUNDS];
 
 SDL_Renderer* Game::gRenderer = nullptr;
 
 
-void Game::init()
+void Game::Init()
 /* Initializes the SDL subsystems and creates game window and game surface
 return "bool" to indicate successful operation or not*/
 {
@@ -75,6 +76,12 @@ return "bool" to indicate successful operation or not*/
 						printf("SDL_ttf could not initialize! SDL_ttf Error: %s\n", TTF_GetError());
 						success = false;
 					}
+					//Initialize SDL_mixer
+					if (Mix_OpenAudio(44100, MIX_DEFAULT_FORMAT, 2, 2048) < 0)
+					{
+						printf("SDL_mixer could not initialize! SDL_mixer Error: %s\n", Mix_GetError());
+						success = false;
+					}
 				}
 			}
 		}
@@ -83,7 +90,7 @@ return "bool" to indicate successful operation or not*/
 }
 
 
-SDL_Texture* Game::load_image_data(const std::string& path, bool& allMediaLoaded)
+SDL_Texture* Game::LoadImageData(const std::string& path, bool& allMediaLoaded)
 // ( Called in the loadMedia() method )
 // This loads the texture of the given path, then converts to the texture and returns the pointer to it.
 {
@@ -126,14 +133,14 @@ SDL_Rect* Game::GetRect(SDL_Texture* const texture, const int x, const int y)
 }
 
 
-void Game::load_media()
+void Game::LoadMedia()
 // Loads media for the game
 {
 	bool allMediaLoaded = true;
 
 	for (int x = 0; x < eImages::TOTAL_IMAGES; x++) // For the amount of the value of the enum "enImages::TOTAL_IMAGES"
 	{
-		game_images[x] = Game::load_image_data(image_path[x], allMediaLoaded);
+		game_images[x] = Game::LoadImageData(image_path[x], allMediaLoaded);
 	}
 
 	//Open the font
@@ -150,11 +157,22 @@ void Game::load_media()
 		allMediaLoaded = false;
 	}
 
+	// Load Sounds
+	for (int x = 0; x < eSounds::TOTAL_SOUNDS; x++) // For the amount of sounds
+	{
+		game_sounds[x] = Mix_LoadWAV(sound_path[x].c_str());
+		if (game_sounds[x] == NULL)
+		{
+			printf("Failed to load %s sound effect! SDL_mixer Error: %s\n", sound_path[x].c_str(), Mix_GetError());
+			allMediaLoaded = false;
+		}
+	}
+
 	set_running(allMediaLoaded);
 }
 
 
-void Game::splash_screen(const int time_to_display) const
+void Game::SplashScreen(const int time_to_display) const
 // Displays and delays the splash screen logo
 {
 
@@ -191,9 +209,7 @@ SDL_Texture* Game::LoadRenderedText(SDL_Texture* texture, const std::string text
 		}
 		else
 		{
-			
 			rect = SDL_Rect{ rect.x, rect.y, (int)((float)textSurface->w * s_r), (int)((float)textSurface->h * s_r) };
-
 		}
 
 		//Get rid of old surface
@@ -208,7 +224,6 @@ void Game::CreateAsteroid(double x, double y, const float size, const bool isCol
 	int angle;
 	double vx;
 	double vy;
-	double rand_img;
 
 	// randomise starting angle of image
 	angle = ((double)rand() / (double)RAND_MAX) * 360;
@@ -216,25 +231,24 @@ void Game::CreateAsteroid(double x, double y, const float size, const bool isCol
 	// randomise radian angle of velocity
 	vx = ((double)rand() / (double)RAND_MAX) * 6.283185f;
 	vy = ((double)rand() / (double)RAND_MAX) * 6.283185f;
-	// calculate vector from this radian angle
-	vx = sin(vx) * (((150.0*s_r) * ((double)rand() / (double)RAND_MAX)) + 60.0);
-	vy = cos(vx) * (((150.0*s_r) * ((double)rand() / (double)RAND_MAX)) + 60.0);
 
-	if (isCollidable)
-	{	
-		// random number to pic between 2 asteroid images
-		rand_img = ((float)rand() / (float)RAND_MAX);
-	}
-	else
+	double speed_multiplier = (((MAX_ASTEROID_SPEED) * ((double)rand() / (double)RAND_MAX))) + MIN_ASTEROID_SPEED;
+	if (speed_multiplier > MAX_ASTEROID_SPEED)
 	{
-		rand_img = NULL;
+		speed_multiplier = MAX_ASTEROID_SPEED;
 	}
+	if (!isCollidable)
+	{
+		speed_multiplier /= 5;
+	}
+	vx = sin(vx) * speed_multiplier;
+	vy = cos(vy) * speed_multiplier;
 
 	// If these asteroids cant spawn near the player (new wave etc)
 	if (!allowed_near_player)
 	{
 		// create temp entity
-		Asteroid temp(x, y, vx, vy, angle, size, rand_img, isCollidable, s_r);
+		Asteroid temp(x, y, vx, vy, angle, size, isCollidable, s_r);
 		// enlarge the radius 
 		temp.radius *= 6.0 * s_r;
 		// use this entity to move the x,y coords if this asteroid is near the player using collision method
@@ -247,7 +261,7 @@ void Game::CreateAsteroid(double x, double y, const float size, const bool isCol
 		y = temp.pos_y;
 	}
 	// Push new asteroid into given vector
-	vector.push_back(std::make_unique<Asteroid>(x, y, vx, vy, angle, size, rand_img, isCollidable, s_r));
+	vector.push_back(std::make_unique<Asteroid>(x, y, vx, vy, angle, size, isCollidable, s_r));
 }
 
 
@@ -264,47 +278,67 @@ void Game::Create2SubAsteroids(const Asteroid* const ast, std::vector<std::uniqu
 	// set one to plus and other to minus of the offset (to imatate them splitting uniformly)
 	radians += offset;
 	radians2 -= offset;
-	float distance = sqrtf(powf(ast->vel_x, 2) + powf(ast->vel_y, 2));
+	float previous_speed = sqrtf(powf(ast->vel_x, 2) + powf(ast->vel_y, 2));
+	float limit = 1.0f;
+	// if the original asteroid wasnt over half of the max speed. Limit the new speed to slightly over Max/2 (to stop asteroids going from slowest to max)
+	if (previous_speed < MAX_ASTEROID_SPEED / 2)
+	{
+		limit = 1.8f;
+	}
+
+	double speed_multiplier = (((MAX_ASTEROID_SPEED / limit) * ((double)rand() / (double)RAND_MAX)) + (MIN_ASTEROID_SPEED * limit));
+	double speed_multiplier2 = (((MAX_ASTEROID_SPEED / limit) * ((double)rand() / (double)RAND_MAX)) + (MIN_ASTEROID_SPEED * limit));
+	if (speed_multiplier > MAX_ASTEROID_SPEED)
+	{
+		speed_multiplier = MAX_ASTEROID_SPEED;
+	}
+	if (speed_multiplier2 > MAX_ASTEROID_SPEED)
+	{
+		speed_multiplier2 = MAX_ASTEROID_SPEED;
+	}
+	
 	// Calculate the new velocity vector from these angles
-	double vx = sin(radians) * distance;
-	double vy = cos(radians) * distance;
-	double vx2 = sin(radians2) * distance;
-	double vy2 = cos(radians2) * distance;
+	double vx = sin(radians) * speed_multiplier;
+	double vy = cos(radians) * speed_multiplier;
+	double vx2 = sin(radians2) * speed_multiplier2;
+	double vy2 = cos(radians2) * speed_multiplier2;//distance) *100 / (rand() % 100 + 75);
+
+	vec_particles.push_back(std::make_unique<Particles>(ast->pos_x + ast->center.x, ast->pos_y + ast->center.y, radians, speed_multiplier, offset, s_r));
+	vec_particles.push_back(std::make_unique<Particles>(ast->pos_x + ast->center.x, ast->pos_y + ast->center.y, radians2, speed_multiplier2, offset, s_r));
 
 	// randomise the image thats used (out of 2 possible images)
 	double rand_img = ((float)rand() / (float)RAND_MAX);
 
 	// push the asteroids into the given vector
-	vector.push_back(std::make_unique<Asteroid>(ast->pos_x, ast->pos_y, vx, vy, ast->angle, ast->size - 2.0, rand_img, ast->isCollidable, s_r));
-	vector.push_back(std::make_unique<Asteroid>(ast->pos_x, ast->pos_y, vx2, vy2, ast->angle, ast->size - 2.0, rand_img, ast->isCollidable, s_r));
+	vector.push_back(std::make_unique<Asteroid>(ast->pos_x, ast->pos_y, vx, vy, ast->angle, ast->size - Asteroid::SMALL, ast->isCollidable, s_r));
+	vector.push_back(std::make_unique<Asteroid>(ast->pos_x, ast->pos_y, vx2, vy2, ast->angle, ast->size - Asteroid::SMALL, ast->isCollidable, s_r));
 }
 
 void Game::CreateBackgroundAsteroids(const int amount)
 {
 	double x, y;
-	for (int i = 0; i < amount/3; i++)
+	for (int i = 0; i < amount; i++)
 	{
 		x = (((double)rand() / (double)RAND_MAX)) * Game::SCREEN_WIDTH;;
 		y = (((double)rand() / (double)RAND_MAX)) * Game::SCREEN_HEIGHT;
-		CreateAsteroid(x, y, Asteroid::SMALL - 1, false, true, vec_bg_asteroids, s_r);
+		CreateAsteroid(x, y, Asteroid::SMALL, false, true, vec_bg_asteroids, s_r);
 
-		x = (((double)rand() / (double)RAND_MAX)) * Game::SCREEN_WIDTH;;
-		y = (((double)rand() / (double)RAND_MAX)) * Game::SCREEN_HEIGHT;
-		CreateAsteroid(x, y, Asteroid::MEDIUM - 1, false, true, vec_bg_asteroids, s_r);
+		//x = (((double)rand() / (double)RAND_MAX)) * Game::SCREEN_WIDTH;;
+		//y = (((double)rand() / (double)RAND_MAX)) * Game::SCREEN_HEIGHT;
+		//CreateAsteroid(x, y, Asteroid::MEDIUM, false, true, vec_bg_asteroids, s_r);
 
-		x = (((double)rand() / (double)RAND_MAX)) * Game::SCREEN_WIDTH;;
-		y = (((double)rand() / (double)RAND_MAX)) * Game::SCREEN_HEIGHT;
-		CreateAsteroid(x, y, Asteroid::LARGE - 1, false, true, vec_bg_asteroids, s_r);
+		//x = (((double)rand() / (double)RAND_MAX)) * Game::SCREEN_WIDTH;;
+		//y = (((double)rand() / (double)RAND_MAX)) * Game::SCREEN_HEIGHT;
+		//CreateAsteroid(x, y, Asteroid::LARGE , false, true, vec_bg_asteroids, s_r);
 	}
 }
 
 
-void Game::handle_wave_completion()
+void Game::HandleWaveCompletion()
 {
 	player->damaged = false;
 	wave_complete = true;
 	bool wave_transition = true;
-	// Simple endless mode
 	wComplete = LoadRenderedText(wComplete, "WAVE " + std::to_string(current_level) + " COMPLETE", gtext_color, l_font, complete, s_r);
 	complete.w *= .6;
 	complete.h *= .6;
@@ -325,6 +359,12 @@ void Game::handle_wave_completion()
 	float time_elapsed = 0;
 	bool delay_reset = false;
 
+	bool sound_played = false;
+
+	Mix_PlayChannel(eSounds::BLACK_HOLE, game_sounds[eSounds::BLACK_HOLE], -1);
+	double width = temp_player.rect->w;
+	double height = temp_player.rect->h;
+
 	while (wave_transition)
 	{
 		if (delta.DelayComplete(true))
@@ -339,16 +379,34 @@ void Game::handle_wave_completion()
 				ast->WrapCoords(SCREEN_WIDTH, SCREEN_HEIGHT);
 				ast->Draw();
 			}
+			if (vec_particles.size() != 0)
+			{
+				for (auto& par : vec_particles)
+				{
+					par->Update(temp_dt/1000);
+					par->Draw();
+				}
+			}
 
 			if (!(player->Collision(BlkHole)))
 			{
-				handle_input(temp_dt / 1000);
+				HandleInput(temp_dt / 1000);
 				player->Update(temp_dt / 1000);
 				player->WrapCoords(SCREEN_WIDTH, SCREEN_HEIGHT);
 				player->Draw();
 			}
 			else
 			{
+				if (!sound_played)
+				{
+					Mix_HaltChannel(eSounds::SHIP_THRUST);
+					Mix_PlayChannel(eSounds::ENTER_BH, game_sounds[eSounds::ENTER_BH], 0);
+					Mix_FadeOutChannel(eSounds::ENTER_BH, 4000);
+					sound_played = true;
+				}
+				vec_particles.clear();
+				vec_particles.reserve(20);
+				player->img = Game::game_images[eImages::SHIP];
 				if (!delay_reset)
 				{
 					player->vel_x = 0;
@@ -365,12 +423,11 @@ void Game::handle_wave_completion()
 				}
 				if (!wave_delay.DelayComplete(false))
 				{
-					//SDL_RenderCopyEx(Game::gRenderer, temp_player.img, NULL, temp_player.rect, temp_player.angle, &temp_player.center, SDL_FLIP_NONE);
-					temp_player.rect->w *= .98;
-					temp_player.rect->h *= .98;
+					temp_player.rect->w = width * (1.0 - time_elapsed);
+					temp_player.rect->h = height * (1.0 - time_elapsed);
 					temp_player.center.x = temp_player.rect->w / 2;
 					temp_player.center.y = temp_player.rect->h / 2;
-					time_elapsed += temp_dt/1000.0f;
+					time_elapsed += temp_dt/4000.0f;
 					temp_player.rect->x = player->pos_x + (vec_x * (time_elapsed));
 					temp_player.rect->y = player->pos_y + (vec_y * (time_elapsed));
 					vec_x > 0 ? temp_player.to_rotate -= 1 : temp_player.to_rotate += 1;
@@ -382,17 +439,25 @@ void Game::handle_wave_completion()
 				{
 					player->pos_x = player->rect->x = temp_player.pos_x;
 					player->pos_y = player->rect->y = temp_player.pos_y;
+					Mix_HaltChannel(eSounds::BLACK_HOLE);
 					wave_transition = false;
 				}
 				
 			}
 			SDL_RenderCopy(gRenderer, wComplete, NULL, &complete);
 			SDL_RenderPresent(gRenderer);
+
+			if (!is_running())
+			{
+				break;
+			}
 		}
 	}
 
 	// spawn new asteroids
 	current_level++;
+	MAX_ASTEROID_SPEED += 10;
+	MIN_ASTEROID_SPEED += 5;
 	double x, y;
 	for (int i = 0; i < asteroid_amount + current_level; i++)
 	{
@@ -410,7 +475,13 @@ void Game::NextLevelTransition(const int center_x, const int center_y)
 }
 
 
-void Game::handle_death()
+void HitAnimation(const float x, const float y)
+{
+
+}
+
+
+void Game::HandleDeath()
 {
 	// render text textures and rects
 	death1 = LoadRenderedText(death1, "YOU DIED", gtext_color, l_font, death1_rect, s_r);
@@ -434,7 +505,7 @@ void Game::handle_death()
 		{
 			SDL_SetRenderDrawColor(gRenderer, 0, 0, 0, 255);
 			SDL_RenderClear(gRenderer);
-			handle_input(zero_dt);
+			HandleInput(zero_dt);
 			for (auto& ast : vec_bg_asteroids)
 			{
 				ast->Update(temp_dt / 1000);
@@ -467,7 +538,7 @@ void Game::handle_death()
 }
 
 
-void Game::handle_input(const double dt)
+void Game::HandleInput(const double dt)
 {
 	while (SDL_PollEvent(&events) != 0)
 	{
@@ -481,6 +552,10 @@ void Game::handle_input(const double dt)
 		{
 			switch (events.key.keysym.sym)
 			{
+			case SDLK_ESCAPE:
+				std::cout << "exit" << std::endl;
+				set_running(false);
+				break;
 			case SDLK_w:
 				if ((player->getImage() != Game::game_images[Game::eImages::SHIP_THRUST] && (!player->is_dead)))
 				{
@@ -505,7 +580,9 @@ void Game::handle_input(const double dt)
 				{
 					// reset game
 					play_again = 'y';
-					set_running(false);
+					ResetGame();
+					// rest game
+					//set_running(false);
 				}
 				break;
 			case SDLK_n:
@@ -524,9 +601,11 @@ void Game::handle_input(const double dt)
 			{
 			case SDLK_w:
 				player->setImage(Game::game_images[Game::eImages::SHIP]);
+				Mix_HaltChannel(eSounds::SHIP_THRUST);
 				break;
 			case SDLK_UP:
 				player->setImage(Game::game_images[Game::eImages::SHIP]);
+				Mix_HaltChannel(eSounds::SHIP_THRUST);
 				break;
 			case SDLK_a:
 				player->to_rotate = 0;
@@ -551,6 +630,16 @@ void Game::handle_input(const double dt)
 	{
 		player->vel_x += sin(player->angle * PI / 180) * SHIP_THRUST * dt;
 		player->vel_y += -cos(player->angle * PI / 180) * SHIP_THRUST * dt;
+
+		if (particle_delay.DelayComplete(true))
+		{
+			vec_particles.push_back(std::make_unique<Particles>(player.get(), 4, s_r));
+		}
+
+		if (!Mix_Playing(eSounds::SHIP_THRUST))
+		{
+			Mix_PlayChannel(eSounds::SHIP_THRUST, game_sounds[eSounds::SHIP_THRUST], -1);
+		}
 	}
 	if (keystates[SDL_SCANCODE_A] || keystates[SDL_SCANCODE_LEFT])
 	{
@@ -572,6 +661,9 @@ void Game::handle_input(const double dt)
 		if (shot_delay.DelayComplete(true))
 		{
 			vec_bullets.push_back(std::make_unique<Bullet>(player.get(), s_r));
+			
+			Mix_PlayChannel(eSounds::SHOOT, game_sounds[eSounds::SHOOT], 0);
+			
 		}
 	}
 }
@@ -594,8 +686,13 @@ void Game::Update(const double dt)
 	{
 		for (auto& ast : vec_asteroids)
 		{
+			// update and wrap coords on each asteroid
+			ast->Update(dt);
+			ast->WrapCoords(SCREEN_WIDTH, SCREEN_HEIGHT);
+
 			if ((player->Collision(*ast)) && (collision_delay.DelayComplete(true)))
 			{
+				Mix_PlayChannel(eSounds::SHIP_HIT, game_sounds[eSounds::SHIP_HIT], 0);
 				score -= 500;
 				if (score < 0) {score = 0; }
 				// re render the HUD score texture
@@ -606,8 +703,11 @@ void Game::Update(const double dt)
 
 				if (player->is_dead)
 				{
+					std::cout << "The 3rd highest score is " << high_score.top3[2].second << std::endl;
 					if (score > high_score.top3[2].second)
 					{
+						Mix_HaltChannel(-1);
+						Mix_PlayChannel(eSounds::HIGH_SCORE, game_sounds[eSounds::HIGH_SCORE], 0);
 						std::string name;
 						std::cout << "\nYou scored in the top 3. Please type your name(no spaces): " << std::endl;
 						std::cin >> name;
@@ -619,14 +719,13 @@ void Game::Update(const double dt)
 					{
 						std::cout << "\nYou didn't score in the top 3. Better luck next time\n" << std::endl;
 					}
+
 					player->asteroid_death = &ast;
-					handle_death();
+					HandleDeath();
+
+					break;
 				}
 			}
-
-			// update and wrap coords on each asteroid
-			ast->Update(dt);
-			ast->WrapCoords(SCREEN_WIDTH, SCREEN_HEIGHT);
 		}
 	}
 	// Update player and Wrap coords
@@ -660,6 +759,7 @@ void Game::Update(const double dt)
 					// if collision
 					if (bul->Collision(*ast))
 					{
+						Mix_PlayChannel(eSounds::HIT, game_sounds[eSounds::HIT], 0);
 						bul->is_dead = true;
 						ast->is_dead = true;
 						score += 100;
@@ -668,7 +768,16 @@ void Game::Update(const double dt)
 						{
 							Create2SubAsteroids((Asteroid*)(ast.get()), vec_tempAsteroids);
 						}
-						break;
+						else
+						{
+							vec_particles.push_back(std::make_unique<Particles>(ast->pos_x+ast->center.x, ast->pos_y + ast->center.y, 10, s_r));
+							break;
+							if (((double)rand() / (double)RAND_MAX) > 0.8)
+							{
+
+							}
+						}
+						
 					}
 				}
 			}
@@ -685,27 +794,59 @@ void Game::Update(const double dt)
 		}
 	}
 
+	if (vec_particles.size() != 0)
+	{
+		for (auto& par : vec_particles)
+		{
+			par->Update(dt);
+		}
+	}
+
 	// If bullet/asteroid is marked as dead, remove them
 	vec_bullets.erase(std::remove_if(vec_bullets.begin(), vec_bullets.end(), [](std::unique_ptr<Entity>& e) { return (e->is_dead); }), vec_bullets.end());
 	vec_asteroids.erase(std::remove_if(vec_asteroids.begin(), vec_asteroids.end(), [](std::unique_ptr<Entity>& e) { return (e->is_dead); }), vec_asteroids.end());
+	vec_particles.erase(std::remove_if(vec_particles.begin(), vec_particles.end(), [](std::unique_ptr<Particles>& e) { return (e->is_complete); }), vec_particles.end());
 
 
 	// IF KILLED ALL ASTEROIDS
 	// if only background asteroids remain and no bullets on screen
 	if ((vec_asteroids.size() == 0) && (vec_bullets.empty()))
 	{	
-		handle_wave_completion();
+		HandleWaveCompletion();
+	}
+
+	if (game_reset)
+	{
+		wComplete = LoadRenderedText(wComplete, "NEW GAME", gtext_color, l_font, complete, s_r);
+		complete.w *= .6;
+		complete.h *= .6;
+		complete.x = SCREEN_WIDTH / 2 - complete.w / 2;
+		complete.y = SCREEN_HEIGHT / 4 - complete.h / 2;
 	}
 }
 
 
-void Game::render() const
+void Game::Render() const
 {
 	SDL_SetRenderDrawColor(gRenderer, 0, 0, 0, 255);
 	SDL_RenderClear(gRenderer);
 	Draw();
 	SDL_RenderCopy(Game::gRenderer, gScore, NULL, &score_rect);
-	SDL_RenderPresent(gRenderer);
+	if (game_reset)
+	{
+		SDL_RenderCopy(gRenderer, wComplete, NULL, &complete);
+		SDL_RenderPresent(gRenderer);
+		SDL_Delay(2000);
+	}
+	else if (wave_complete)
+	{
+		SDL_RenderPresent(gRenderer);
+		SDL_Delay(1000);
+	}
+	else
+	{
+		SDL_RenderPresent(gRenderer);
+	}
 }
 
 
@@ -726,6 +867,14 @@ void Game::Draw() const
 		for (auto& ent : vec_asteroids)
 		{
 			ent->Draw();
+		}
+	}
+	// explosions
+	if (vec_particles.size() != 0)
+	{
+		for (auto& par : vec_particles)
+		{
+			par->Draw();
 		}
 	}
 	// draw bullets
@@ -756,21 +905,24 @@ Game::Game(const int FPS)
 	this->FPS = FPS;
 
 	srand((unsigned)time(NULL));
-	this->init();
+	this->Init();
 	FONT_SIZE = 50.0 * s_r;
-	this->load_media();
+	this->LoadMedia();
 
 	SHIP_THRUST = 750 * s_r;
+	MAX_ASTEROID_SPEED *= s_r;
+	MIN_ASTEROID_SPEED *= s_r;
 	smallest_asteroid = 2 * s_r;
 	screen_center_x = SCREEN_WIDTH / 2;
 	screen_center_y = SCREEN_HEIGHT / 2;
 
-	vec_bg_asteroids.reserve(45);
+	vec_bg_asteroids.reserve(60);
 	vec_asteroids.reserve(50);
 	vec_bullets.reserve(20);
+	vec_particles.reserve(20);
 
 	// create background asteroids
-	CreateBackgroundAsteroids(45);
+	CreateBackgroundAsteroids(60);
 
 	// create player
 	player = std::make_unique<Player>(screen_center_x, screen_center_y, s_r);
@@ -786,9 +938,6 @@ Game::Game(const int FPS)
 
 	//load text texture for score
 	gScore = LoadRenderedText(gScore, "SCORE: " + std::to_string(score), gtext_color, g_font, score_rect, s_r);
-	//scale rect
-	//score_rect.w *= s_r;
-	//score_rect.h *= s_r;
 	score_rect.x = SCREEN_WIDTH/2 - score_rect.w / 2;
 	score_rect.y += 10 * s_r;
 
@@ -813,6 +962,49 @@ Game::Game(const int FPS)
 	sheild_amount_rect->w = original_sheild_length * player->current_sheild;
 }
 
+void Game::ResetGame()
+{
+	srand((unsigned)time(NULL));
+	MAX_ASTEROID_SPEED = 250*s_r;
+	MIN_ASTEROID_SPEED = 75*s_r;
+
+	//vc_b_asteroids.clear();
+	vec_asteroids.clear();
+	vec_bullets.clear();
+	vec_particles.clear();
+	vec_asteroids.reserve(50);
+	vec_bullets.reserve(20);
+	vec_particles.reserve(20);
+
+	//player = std::make_unique<Player>(screen_center_x, screen_center_y, s_r);
+	player->current_sheild = 1.0f;
+	sheild_amount_rect->w = original_sheild_length * player->current_sheild;
+
+	player->pos_x = screen_center_x;
+	player->pos_y = screen_center_y;
+	player->to_rotate = 0;
+	player->is_dead = false;
+	player->vel_x = player->vel_y = 0;
+
+	score = 0;
+	gScore = LoadRenderedText(gScore, "SCORE: " + std::to_string(score), gtext_color, g_font, score_rect, s_r);
+	score_rect.x = SCREEN_WIDTH / 2 - score_rect.w / 2;
+	score_rect.y = 10 * s_r;
+
+
+	current_level = 1;
+	// Create main asteroids
+	double x, y;
+	for (int i = 0; i < asteroid_amount + current_level; i++)
+	{
+		x = (((double)rand() / (double)RAND_MAX)) * Game::SCREEN_WIDTH;;
+		y = (((double)rand() / (double)RAND_MAX)) * Game::SCREEN_HEIGHT;
+		CreateAsteroid(x, y, Asteroid::LARGE, true, false, vec_asteroids, s_r);
+	}
+
+	game_reset = true;
+}
+
 
 bool Game::is_running() const
 // Gets the game's current "running" loop condition
@@ -828,7 +1020,7 @@ void Game::set_running(const bool new_bool)
 }
 
 
-void Game::exit_game()
+void Game::ExitGame()
 /* Free surfaces and set any pointers to Null before exiting
 IMPORTANT FOR MEMORY USAGE INSIDE PROGRAM */
 {
@@ -841,6 +1033,14 @@ IMPORTANT FOR MEMORY USAGE INSIDE PROGRAM */
 		SDL_DestroyTexture(game_images[x]);
 		game_images[x] = nullptr;
 	}
+	
+	TOTAL = eSounds::TOTAL_SOUNDS;
+	for (int x = 0; x < TOTAL; x++)
+	{
+		Mix_FreeChunk(game_sounds[x]);
+		game_sounds[x] = nullptr;
+	}
+
 	SDL_DestroyTexture(gScore);
 	gScore = nullptr;
 
@@ -877,11 +1077,12 @@ IMPORTANT FOR MEMORY USAGE INSIDE PROGRAM */
 
 	IMG_Quit();
 	TTF_Quit();
+	Mix_Quit();
 	SDL_Quit();
 }
 
 
 Game::~Game()
 {
-	exit_game();
+	ExitGame();
 }

@@ -73,13 +73,13 @@
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <LinkIncremental>true</LinkIncremental>
-    <IncludePath>C:\Dev\SDL2_ttf-2.0.15\include;C:\Dev\SDL2_image-2.0.5\include;C:\Dev\SDL2\include;$(IncludePath)</IncludePath>
-    <LibraryPath>C:\Dev\SDL2_ttf-2.0.15\lib\x86;C:\Dev\SDL2_image-2.0.5\lib\x86;C:\Dev\SDL2\lib\x86;$(LibraryPath)</LibraryPath>
+    <IncludePath>C:\Dev\SDL2_mixer-2.0.4\include;C:\Dev\SDL2_ttf-2.0.15\include;C:\Dev\SDL2_image-2.0.5\include;C:\Dev\SDL2\include;$(IncludePath)</IncludePath>
+    <LibraryPath>C:\Dev\SDL2_mixer-2.0.4\lib\x86;C:\Dev\SDL2_ttf-2.0.15\lib\x86;C:\Dev\SDL2_image-2.0.5\lib\x86;C:\Dev\SDL2\lib\x86;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <LinkIncremental>false</LinkIncremental>
-    <IncludePath>C:\Dev\SDL2_ttf-2.0.15\include;C:\Dev\SDL2_image-2.0.5\include;C:\Dev\SDL2\include;$(IncludePath)</IncludePath>
-    <LibraryPath>C:\Dev\SDL2_ttf-2.0.15\lib\x86;C:\Dev\SDL2_image-2.0.5\lib\x86;C:\Dev\SDL2\lib\x86;$(LibraryPath)</LibraryPath>
+    <IncludePath>C:\Dev\SDL2_mixer-2.0.4\include;C:\Dev\SDL2_ttf-2.0.15\include;C:\Dev\SDL2_image-2.0.5\include;C:\Dev\SDL2\include;$(IncludePath)</IncludePath>
+    <LibraryPath>C:\Dev\SDL2_mixer-2.0.4\lib\x86;C:\Dev\SDL2_ttf-2.0.15\lib\x86;C:\Dev\SDL2_image-2.0.5\lib\x86;C:\Dev\SDL2\lib\x86;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <LinkIncremental>true</LinkIncremental>
@@ -106,7 +106,7 @@
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <AdditionalLibraryDirectories>C:\Dev\SDL2_ttf-2.0.15\lib\x86;C:\Dev\SDL2_image-2.0.5\lib\x86;C:\Dev\SDL2\lib\x86;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>SDL2main.lib;SDL2.lib;SDL2_image.lib;SDL2_ttf.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>SDL2main.lib;SDL2.lib;SDL2_image.lib;SDL2_ttf.lib;SDL2_mixer.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -124,7 +124,7 @@
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <AdditionalLibraryDirectories>C:\Dev\SDL2_ttf-2.0.15\lib\x86;C:\Dev\SDL2_image-2.0.5\lib\x86;C:\Dev\SDL2\lib\x86;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>SDL2main.lib;SDL2.lib;SDL2_image.lib;SDL2_ttf.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>SDL2main.lib;SDL2.lib;SDL2_image.lib;SDL2_ttf.lib;SDL2_mixer.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
@@ -165,6 +165,7 @@
     <ClCompile Include="Game.cpp" />
     <ClCompile Include="HighScore.cpp" />
     <ClCompile Include="main.cpp" />
+    <ClCompile Include="Particles.cpp" />
     <ClCompile Include="Player.cpp" />
     <ClCompile Include="PowerUp.cpp" />
   </ItemGroup>
@@ -175,6 +176,7 @@
     <ClInclude Include="Game.h" />
     <ClInclude Include="BlackHole.h" />
     <ClInclude Include="HighScore.h" />
+    <ClInclude Include="Particles.h" />
     <ClInclude Include="Player.h" />
     <ClInclude Include="DelayTimer.h" />
     <ClInclude Include="PowerUp.h" />

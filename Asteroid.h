@@ -6,7 +6,7 @@ public:
 	double angle_modifier = 0;
 	SDL_Texture* img = nullptr;
 
-	Asteroid(const double x, const double y, const double vx, const double vy, const int angle, float asteriod_size, const double rand_img, const bool isCollidable, const float screen_ratio);
+	Asteroid(const double x, const double y, const double vx, const double vy, const int angle, float asteriod_size, const bool isCollidable, const float screen_ratio);
 
 	void Draw() const override;
 	void Update(const double dt) override;
@@ -14,9 +14,9 @@ public:
 
 	enum SIZE
 	{
-		SMALL = 2,
-		MEDIUM = 4,
-		LARGE = 6
+		SMALL = 1,
+		MEDIUM = 2,
+		LARGE = 3
 	};
 
 private:

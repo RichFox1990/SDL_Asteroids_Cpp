@@ -10,8 +10,8 @@ Player::Player(const double x, const double y, const float s_r)
 
 	img = Game::game_images[Game::eImages::SHIP];
 	rect = Game::GetRect(img, x, y);
-	rect->w /=10;
-	rect->h /= 10;
+	rect->w /= 20 - (Asteroid::SMALL * 5);
+	rect->h /= 20 - (Asteroid::SMALL * 5);
 	rect->w *= s_r;
 	rect->h *= s_r;
 

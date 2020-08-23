@@ -2,7 +2,7 @@
 #include "Game.h"
 //#include "stdlib.h"
 
-Asteroid::Asteroid(const double x, const double y, const double vx, const double vy, const int angle, float size, const double rand_img, const bool isCollidable, const float s_r)
+Asteroid::Asteroid(const double x, const double y, const double vx, const double vy, const int angle, float size, const bool isCollidable, const float s_r)
 {
 	MAX_SPEED = 350.0 * s_r;
 	//set position and velocity
@@ -18,21 +18,27 @@ Asteroid::Asteroid(const double x, const double y, const double vx, const double
 	this->angle = angle;
 
 	// set to image 1 or 2 depending n the random number given.
-	if (rand_img == NULL) // If its a background asteroid - use more basic image
+	if (!this->isCollidable) // If its a background asteroid - use more basic image
 	{
 		img = Game::game_images[Game::eImages::BG_ASTEROID];
 		rect = Game::GetRect(img, x, y);
 	}
-	else if (rand_img <= .5) // image 1
+	else
 	{
-		img = Game::game_images[Game::eImages::ASTEROID1];
-		rect = Game::GetRect(img, x, y);
+		// random number to pic between 2 asteroid images
+		float rand_img = ((float)rand() / (float)RAND_MAX);
+		if (rand_img <= .5) // image 1
+		{
+			img = Game::game_images[Game::eImages::ASTEROID1];
+			rect = Game::GetRect(img, x, y);
+		}
+		else // image 2
+		{
+			img = Game::game_images[Game::eImages::ASTEROID2];
+			rect = Game::GetRect(img, x, y);
+		}
 	}
-	else // image 2
-	{
-		img = Game::game_images[Game::eImages::ASTEROID2];
-		rect = Game::GetRect(img, x, y);
-	}
+
 	// scale 320x320 image down to 32x32
 	rect->w /= 10;
 	rect->h /= 10;
@@ -50,9 +56,9 @@ Asteroid::Asteroid(const double x, const double y, const double vx, const double
 	}
 	else // if its background asteroid
 	{
-		size = (size/s_r) + (2/s_r);
-		rect->w /= size;
-		rect->h /= size;
+		this->size = 10;// (5 * Asteroid::SMALL) / s_r; //(size/ s_r) + ((10 - Asteroid::SMALL) / s_r);
+		rect->w = 3;//this->size;
+		rect->h = 3;//this->size;
 		angle_modifier = 0; // no need to waste resources altering angle each frame for tiny background entities
 	}
 	// set width/height variables
