@@ -12,6 +12,8 @@
 #include "Particles.h"
 #include <SDL_mixer.h>
 
+class StateMachine;
+
 static const double PI = 3.14159265;
 
 class Game {
@@ -140,6 +142,10 @@ private:
 	void HandleDeath();
 	void HudDraw() const;
 	void Draw() const;
+
+	// State machinf for the game
+	StateMachine *State_Machine;
+
 	SDL_Texture* LoadRenderedText(SDL_Texture* texture, const std::string textureText, const SDL_Color& const textColor, TTF_Font* const font, SDL_Rect& const rect, const float s_r);
 	SDL_Texture* LoadImageData(const std::string& path, bool& allMediaLoaded);
 
@@ -149,7 +155,7 @@ private:
 	DelayTimer particle_delay{ 35.0f , true };
 
 	//std::array<int, 2> level = { 1,100 };//{ 4, 5, 6, 7, 8 };// { 1, 1, 1, 1, 1}; //{ 4, 5, 6, 7, 8 };
-	int asteroid_amount = 3;
+	int asteroid_amount = 0;
 	int MAX_ASTEROID_SPEED = 250;
 	int MIN_ASTEROID_SPEED = 75;
 

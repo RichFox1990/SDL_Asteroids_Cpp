@@ -6,6 +6,8 @@
 #include <time.h>
 #include "math.h"
 
+#include "StateMachine/StateMachine.h"
+
 
 SDL_Event Game::events;
 
