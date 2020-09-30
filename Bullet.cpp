@@ -1,5 +1,6 @@
 #include "Bullet.h"
 #include "Game.h"
+#include "Asteroid.h"
 
 
 Bullet::Bullet(const Entity* player, const float s_r)

@@ -1,9 +1,10 @@
 #include "Player.h"
 #include "Game.h"
+#include "Asteroid.h"
 
 Player::Player(const double x, const double y, const float s_r)
 {
-	current_sheild = 1.0f; // 1 = 100%
+	current_sheild = 0.25f; // 1 = 100%
 	MAX_SPEED = 350.0 * s_r;
 	pos_x = x;
 	pos_y = y;

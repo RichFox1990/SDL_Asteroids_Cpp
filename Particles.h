@@ -3,7 +3,8 @@
 #include <vector>
 #include "SDL.h"
 #include "DelayTimer.h"
-#include "Player.h"
+
+class Player;
 
 struct Pixel
 {
@@ -17,7 +18,7 @@ struct Pixel
 class Particles
 {
 public:
-	Particles(const int x, const int y, double radians, const double speed, const double offset, const float s_r);
+	Particles(const int x, const int y, double radians, const double speed, const double offset, const int amount, const float s_r);
 	Particles(const int x, const int y, const float amount, const float s_r);
 	Particles(Player* player, const int amount, const float s_r);
 	void Update(double const dt);
@@ -34,7 +35,8 @@ public:
 	DelayTimer life_cycle = { 1250, false };
 	bool is_complete = false;
 
-	std::vector<Pixel*> pixels;
+	std::vector<std::unique_ptr<Pixel>> pixels;
+	//std::vector<Pixel*> pixels;
 	
 };
 

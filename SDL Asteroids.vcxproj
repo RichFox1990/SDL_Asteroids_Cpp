@@ -168,9 +168,12 @@
     <ClCompile Include="Particles.cpp" />
     <ClCompile Include="Player.cpp" />
     <ClCompile Include="PowerUp.cpp" />
+    <ClCompile Include="StateMachine\StateDeath.cpp" />
     <ClCompile Include="StateMachine\StateIntro.cpp" />
     <ClCompile Include="StateMachine\StateMachine.cpp" />
     <ClCompile Include="StateMachine\StatePlaying.cpp" />
+    <ClCompile Include="StateMachine\StateWaveComplete.cpp" />
+    <ClCompile Include="StateMachine\StateWaveTransition.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Asteroid.h" />
@@ -184,9 +187,12 @@
     <ClInclude Include="DelayTimer.h" />
     <ClInclude Include="PowerUp.h" />
     <ClInclude Include="StateMachine\GameState.h" />
+    <ClInclude Include="StateMachine\StateDeath.h" />
     <ClInclude Include="StateMachine\StateIntro.h" />
     <ClInclude Include="StateMachine\StateMachine.h" />
     <ClInclude Include="StateMachine\StatePlaying.h" />
+    <ClInclude Include="StateMachine\StateWaveComplete.h" />
+    <ClInclude Include="StateMachine\StateWaveTransition.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

@@ -12,7 +12,7 @@ public:
 	int to_rotate = 0;
 	float current_sheild;
 	SDL_Texture* img = nullptr;
-	std::unique_ptr<Entity>* asteroid_death = nullptr;
+	//std::unique_ptr<Entity>* asteroid_death = nullptr;
 
 	Player(const double x, const double y, const float screen_ratio);
 

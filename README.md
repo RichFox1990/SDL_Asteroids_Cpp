@@ -2,7 +2,14 @@
 
 ## Creating a custom Asteroids game using SDL2
 
+## GIF
+![](/Screenshots/UPDATE-10-GIF.gif)
+
 [![UPDATE 9](/Screenshots/UPDATE-9-particles.png)]("Particle_Effects")
+
+### UPDATE 10 (18/9/20)
+- ADDED StateMachine (Full Code structure change) - easier editing game states going forward
+- Code tidy, more forward declarations. Less #includes (removed unused/ not needed)
 
 ### UPDATE 9 (22/8/20)
 - ADDED particles upon destroying asteroids (velocity and direction dependant on asteroids)
