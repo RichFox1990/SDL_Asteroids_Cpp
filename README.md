@@ -3,7 +3,7 @@
 ## Creating a custom Asteroids game using SDL2
 
 ## GIF
-![](/Screenshots-Videos/UPDATE 11 - gameplay.gif)
+![](/Screenshots-Videos/UPDATE-11-gameplay.gif)
 
 ### UPDATE 11 (19/11/20)
 - ADDED collectable powerups first pass (sheild regen) - items pulse, move through space and have a limited lifetime for collection.
