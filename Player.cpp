@@ -2,9 +2,9 @@
 #include "Game.h"
 #include "Asteroid.h"
 
-Player::Player(const double x, const double y, const float s_r)
+Player::Player(const float x, const float y, const float starting_sheild, const float s_r)
 {
-	current_sheild = 0.25f; // 1 = 100%
+	current_sheild = starting_sheild;
 	MAX_SPEED = 350.0 * s_r;
 	pos_x = x;
 	pos_y = y;
@@ -16,7 +16,7 @@ Player::Player(const double x, const double y, const float s_r)
 	rect->w *= s_r;
 	rect->h *= s_r;
 
-	radius = ((double)rect->w * .5) *.75;
+	radius = ((float)rect->w * .5) *.75;
 	width = rect->w;
 	height = rect->h;
 
@@ -55,10 +55,10 @@ void Player::Draw() const
 }
 
 
-void Player::Update(const double dt)
+void Player::Update(const float dt)
 {
 	// Cap velocity and scale if limit reached
-	double distance = sqrt((pow(vel_x, 2) + pow(vel_y, 2)));
+	float distance = sqrt((pow(vel_x, 2) + pow(vel_y, 2)));
 	if (distance > MAX_SPEED)
 	{
 		vel_x = (vel_x / distance) * MAX_SPEED;
@@ -93,23 +93,38 @@ void Player::Update(const double dt)
 	}
 }
 
-void Player::Damage(const float amount)
+float Player::Health(const float amount)
 {
-	if (current_sheild == 0)
+	if (amount < 0)
 	{
-		is_dead = true;
+		if (current_sheild == 0)
+		{
+			to_remove = true;
+			return 0.0f;
+		}
+
+		damaged = true;
 	}
 	else
 	{
-		// reduce sheild
-		damaged = true;
-		current_sheild -= amount/100;
-
-		if (current_sheild < 0)
+		if (current_sheild == 100)
 		{
-			current_sheild = 0;
+			// to do overdrive
+			return 0.0f;
 		}
 	}
+	
+	// Alter sheild health
+	float old_sheild = current_sheild;
+
+	current_sheild += amount / 100;
+
+	if (current_sheild > 1)
+	{
+		current_sheild = 1;
+	}
+
+	return current_sheild - old_sheild;
 }
 
 SDL_Texture* Player::getImage() const

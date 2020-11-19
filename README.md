@@ -3,7 +3,16 @@
 ## Creating a custom Asteroids game using SDL2
 
 ## GIF
-![](/Screenshots/UPDATE-10-GIF.gif)
+![](/Screenshots-Videos/UPDATE 11 - gameplay.gif)
+
+### UPDATE 11 (19/11/20)
+- ADDED collectable powerups first pass (sheild regen) - items pulse, move through space and have a limited lifetime for collection.
+- ADDED many visual improvements - visual indicators for collecting items and when damaged
+- FEATURE blackholes now have a transition enlarge phase when entered - also items get destroyed when entering (more todo)
+- ADDED smooth sheild bar animation upon increase/decrease.
+- NEW and additional SOUNDS
+- NEW background image
+- code cleanup
 
 ### UPDATE 10 (18/9/20)
 - ADDED StateMachine (Full Code structure change) - easier editing game states going forward
@@ -84,9 +93,10 @@
 #### Upcoming
 - Collision - DONE
 - Score system - intially DONE
+- Add high score in game (replace console implementation)
 - Wave/levels - intially DONE added blackholes (v7)
 - Lives/ Shield - Sheild 1st pass DONE
-- Add high score in game (replace console implementation)
-- Sounds - DONE
-- Powerups
+- Sounds - DONE reworked (v11)
+- Powerups - done (1st pass v11)
 - Menus
+- move entity updates and collisions into releveant child classes

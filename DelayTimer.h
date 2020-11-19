@@ -45,4 +45,10 @@ public:
 		}
 	}
 
+	float DelayProgress()
+	{
+		current_check = SDL_GetTicks();
+		return (current_check - last_success) / delay;
+	}
+
 };

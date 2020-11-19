@@ -2,7 +2,7 @@
 #include "Game.h"
 //#include "stdlib.h"
 
-Asteroid::Asteroid(const double x, const double y, const double vx, const double vy, const int angle, float size, const bool isCollidable, const float s_r)
+Asteroid::Asteroid(const float x, const float y, const float vx, const float vy, const int angle, float size, const bool isCollidable, const float s_r)
 {
 	MAX_SPEED = 350.0 * s_r;
 	//set position and velocity
@@ -52,20 +52,20 @@ Asteroid::Asteroid(const double x, const double y, const double vx, const double
 		this->size = size;
 		rect->w *= size * s_r;
 		rect->h *= size * s_r;
-		angle_modifier = (((double)rand() / (double)RAND_MAX) * 200.0) + 20.0;
+		angle_modifier = (((float)rand() / (float)RAND_MAX) * 200.0) + 20.0;
 	}
 	else // if its background asteroid
 	{
-		this->size = 10;// (5 * Asteroid::SMALL) / s_r; //(size/ s_r) + ((10 - Asteroid::SMALL) / s_r);
-		rect->w = 3;//this->size;
-		rect->h = 3;//this->size;
+		this->size = 10 * s_r;// (5 * Asteroid::SMALL) / s_r; //(size/ s_r) + ((10 - Asteroid::SMALL) / s_r);
+		rect->w = 5 * s_r;//this->size;
+		rect->h = 5 * s_r;//this->size;
 		angle_modifier = 0; // no need to waste resources altering angle each frame for tiny background entities
 	}
 	// set width/height variables
 	width = rect->w;
 	height = rect->h;
 	// set radius (for collisions) 
-	radius = ((double)rect->h * .5);
+	radius = ((float)rect->h * .5);
 	center.x = rect->w * .5;
 	center.y = rect->h * .5;
 
@@ -81,7 +81,7 @@ Asteroid::Asteroid(const double x, const double y, const double vx, const double
 }
 
 
-void Asteroid::Update(const double dt)
+void Asteroid::Update(const float dt)
 {
 	pos_x += vel_x * dt;
 	pos_y += vel_y * dt;
@@ -117,12 +117,12 @@ void Asteroid::Draw() const
 	}
 	else
 	{
-		SDL_SetTextureColorMod(img, 0, 255, 255);
-		SDL_RenderCopy(Game::gRenderer, img, NULL, rect);
-		
+		if (draw)
+		{
+			SDL_SetTextureColorMod(img, 255, 255, 255);
+			SDL_RenderCopy(Game::gRenderer, img, NULL, rect);
+		}
 	}
-
-
 }
 
 

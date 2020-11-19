@@ -14,13 +14,13 @@ public:
 	SDL_Texture* img = nullptr;
 	//std::unique_ptr<Entity>* asteroid_death = nullptr;
 
-	Player(const double x, const double y, const float screen_ratio);
+	Player(const float x, const float y, const float starting_sheild, const float screen_ratio);
 
 	void Draw() const override;
-	void Update(const double dt) override;
+	void Update(const float dt) override;
 	SDL_Texture* getImage() const;
 	void setImage(SDL_Texture* const new_img);
-	void Damage(const float amount);
+	float Health(const float amount);
 
 	~Player();
 

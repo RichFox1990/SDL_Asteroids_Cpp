@@ -18,7 +18,7 @@
 void StateWaveComplete::Init(Game* game)
 {
 	printf("Initialising Wave Complete State\n");
-
+	pGame = game;
 	game->player->damaged = false;
 
 	complete = std::make_unique<SDL_Rect>();
@@ -57,8 +57,8 @@ void StateWaveComplete::Cleanup()
 	delete black_hole;
 	black_hole = nullptr;
 
-	//delete InterpPlayer;
-	//InterpPlayer = nullptr;
+	delete InterpPlayer;
+	InterpPlayer = nullptr;
 
 	delete copy_player_rect;
 	copy_player_rect = nullptr;
@@ -66,18 +66,20 @@ void StateWaveComplete::Cleanup()
 	//TODO CHANGE ABOVE TO UNIQUE POINTERS
 }
 
-void StateWaveComplete::Pause()
+void StateWaveComplete::Pause(Game* game)
 {
 	printf("Wave Complete State Paused.\n");
 }
 
-void StateWaveComplete::Resume()
+void StateWaveComplete::Resume(Game* game)
 {
 	printf("Wave Complete State Resumed\n");
 }
 
 void StateWaveComplete::HandleEvents(StateMachine* sm, Game* game)
 {
+	if (game->player->Collision(*black_hole)) return;
+
 	float dt = sm->GetDelta();
 
 	SDL_Event events = game->events;
@@ -101,7 +103,7 @@ void StateWaveComplete::HandleEvents(StateMachine* sm, Game* game)
 				sm->Quit();
 				break;
 			case SDLK_w:
-				if ((game->player->getImage() != Game::game_images[Game::eImages::SHIP_THRUST] && (!game->player->is_dead)))
+				if ((game->player->getImage() != Game::game_images[Game::eImages::SHIP_THRUST] && (!game->player->to_remove)))
 				{
 					game->player->setImage(Game::game_images[Game::eImages::SHIP_THRUST]);
 				}
@@ -166,7 +168,7 @@ void StateWaveComplete::HandleEvents(StateMachine* sm, Game* game)
 
 		if (!Mix_Playing(Game::eSounds::SHIP_THRUST))
 		{
-			Mix_PlayChannel(Game::eSounds::SHIP_THRUST, Game::game_sounds[Game::eSounds::SHIP_THRUST], -1);
+			Mix_PlayChannel(Game::eSounds::SHIP_THRUST, Game::game_sounds[Game::eSounds::SHIP_THRUST], 0);
 		}
 	}
 	if (keystates[SDL_SCANCODE_A] || keystates[SDL_SCANCODE_LEFT])
@@ -190,7 +192,6 @@ void StateWaveComplete::HandleEvents(StateMachine* sm, Game* game)
 			game->vec_bullets.push_back(std::make_unique<Bullet>(game->player.get(), game->s_r));
 
 			Mix_PlayChannel(Game::eSounds::SHOOT, Game::game_sounds[Game::eSounds::SHOOT], 0);
-
 		}
 	}
 }
@@ -205,6 +206,17 @@ void StateWaveComplete::Update(StateMachine* sm, Game* game)
 	{
 		ast->Update(dt);
 		ast->WrapCoords(game->SCREEN_WIDTH, game->SCREEN_HEIGHT);
+		if (black_hole != nullptr)
+		{
+			if (ast->Collision(*black_hole))
+			{
+				ast->draw = false;
+			}
+			else
+			{
+				ast->draw = true;
+			}
+		}
 	}
 			
 	if (game->vec_particles.size() != 0)
@@ -214,19 +226,50 @@ void StateWaveComplete::Update(StateMachine* sm, Game* game)
 			par->Update(dt);
 		}
 	}
+	if (game->vec_power_ups.size() != 0)
+	{
+		for (auto& pow : game->vec_power_ups)
+		{
+			pow->Update(dt);
+			pow->WrapCoords(game->SCREEN_WIDTH, game->SCREEN_HEIGHT);
+
+			if (pow->Collision(*(game->player)))
+			{
+				Mix_PlayChannel(Game::eSounds::COLLECT, Game::game_sounds[Game::eSounds::COLLECT], 0);
+				pow->to_remove = true;
+				// to do SWITCH STATEMENT
+				sm->sheild_interp += game->player->Health(25.0f);
+				game->vec_particles.push_back(std::make_unique<Particles>(pow.get(), game->s_r));
+
+			}
+			if (pow->Collision(*(black_hole)))
+			{
+				pow->to_remove = true;
+			}
+		}
+	}
+	sm->HandleSheildInterp();
+
+	game->vec_power_ups.erase(std::remove_if(game->vec_power_ups.begin(), game->vec_power_ups.end(), [](std::unique_ptr<Entity>& e) { return (e->to_remove); }), game->vec_power_ups.end());
 
 	if (!(game->player->Collision(*black_hole)))
 	{
 		game->player->Update(dt);
 		game->player->WrapCoords(game->SCREEN_WIDTH, game->SCREEN_HEIGHT);
+
 	}
 	else
 	{
 		Mix_HaltChannel(Game::eSounds::SHIP_THRUST);
+		entered_bh = true;
+		black_hole->enlarge = true;
+		game->player->vel_x = 0;
+		game->player->vel_y = 0;
+
 		if (!this->sound_played)
 		{
-			Mix_PlayChannel(Game::eSounds::ENTER_BH, game->game_sounds[Game::eSounds::ENTER_BH], 0);
-			Mix_FadeOutChannel(Game::eSounds::ENTER_BH, 4000);
+			Mix_PlayChannel(Game::eSounds::ENTER_BH, Game::game_sounds[Game::eSounds::ENTER_BH], 0);
+			//Mix_FadeOutChannel(Game::eSounds::ENTER_BH, 3750);
 
 			// make a copy for when we return to gamePlaying state
 			copy_player_rect = new SDL_Rect{ game->player->rect->x, game->player->rect->y, game->player->rect->w, game->player->rect->h };
@@ -234,67 +277,64 @@ void StateWaveComplete::Update(StateMachine* sm, Game* game)
 			// ensure player has no left over velocity and is displaying standard ship image
 			game->player->img = Game::game_images[Game::eImages::SHIP];
 
-			// Calculate x and y distance from center of player to center of blackhole.
-			interp_vec_y = ((black_hole->pos_y + black_hole->rect->h / 2) - (game->player->pos_y + game->player->center.y));
-			interp_vec_x = ((black_hole->pos_x + black_hole->rect->w / 2) - (game->player->pos_x + game->player->center.x));
+			interp_vec_y = ((pGame->SCREEN_HEIGHT / 2.0) - ((float)game->player->pos_y + game->player->center.y));
+			interp_vec_x = ((pGame->SCREEN_WIDTH / 2.0) - ((float)game->player->pos_x + game->player->center.x));
+			//interp_vec_y = ((black_hole->pos_y + (black_hole->center.y)) - (game->player->pos_y + game->player->center.y));
+			//interp_vec_x = ((black_hole->pos_x + (black_hole->center.x)) - (game->player->pos_x + game->player->center.x));
 
 			// reset timer we will use for interpulating the player to the center of the blackhole
 			total_time = percentage_elapsed = 0.0;
 			InterpPlayer->Reset();
 			this->sound_played = true;
 		}
-			
+
 
 		// distance from player center to blackhole center
 		//double distance = sqrt((pow(vec_x, 2) + pow(vec_y, 2))); // needed?
-			
+
+	}
+	if (entered_bh)
+	{
 		if (!InterpPlayer->DelayComplete(false)) // alter player based on time passed
 		{
 			// for readability
-			double orig_w = copy_player_rect->w;
-			double orig_h = copy_player_rect->h;
-
-			game->player->vel_x = 0;
-			game->player->vel_y = 0;
-
-			total_time += dt*1000.0;
-			percentage_elapsed = (total_time / InterpPlayer->delay);
+			percentage_elapsed = InterpPlayer->DelayProgress();
+			float orig_w = copy_player_rect->w;
+			float orig_h = copy_player_rect->h;
 
 			// reduce rect size over time
 			game->player->rect->w = orig_w * (1.0 - percentage_elapsed);
 			game->player->rect->h = orig_h * (1.0 - percentage_elapsed);
 
-			// needed????????
-			game->player->center.x = game->player->rect->w / 2;
-			game->player->center.y = game->player->rect->h / 2;
+			// alter center point to ensure its rotated on correct axis
+			game->player->center.x = game->player->rect->w / 2.0;
+			game->player->center.y = game->player->rect->h / 2.0;
 
 			// alter position over time
-			game->player->pos_x = copy_player_rect->x + (interp_vec_x * (percentage_elapsed));
-			game->player->pos_y = copy_player_rect->y + (interp_vec_y * (percentage_elapsed));
+			game->player->pos_x = copy_player_rect->x + (interp_vec_x * percentage_elapsed);
+			game->player->pos_y = copy_player_rect->y + (interp_vec_y * percentage_elapsed);
 
 			// rotate the player based on orientation to blackhole and the new angle
 			interp_vec_x >= 0 ? game->player->to_rotate -= 1 : game->player->to_rotate += 1;
-			game->player->angle += game->player->to_rotate * (dt*1000.0);
+			game->player->angle += game->player->to_rotate * (dt * 1000.0);
 			game->player->angle = game->player->angle % 360;
 
-			game->player->Update(dt);
+			black_hole->InterpCentre(dt , InterpPlayer->delay / 1000.0);
 
-			//game->player.Draw();
+			game->player->Update(dt);
 		}
 		else if (!popped_state) // change state
 		{
 			popped_state = true;
-			//game->player->pos_x = game->player->rect->x;
-			//game->player->pos_y = game->player->rect->y;
-			Mix_HaltChannel(Game::eSounds::BLACK_HOLE);
 
 			//setup next stage
 			Mix_HaltChannel(Game::eSounds::BLACK_HOLE);
+			Mix_HaltChannel(Game::eSounds::ENTER_BH);
 			sm->SetupNextWave();
 			game->player->rect->w = copy_player_rect->w;
 			game->player->rect->h = copy_player_rect->h;
-			game->player->center.x = copy_player_rect->w/2;
-			game->player->center.y = copy_player_rect->h/2;
+			game->player->center.x = copy_player_rect->w / 2;
+			game->player->center.y = copy_player_rect->h / 2;
 			sm->PopState();
 		}
 
@@ -307,8 +347,8 @@ void StateWaveComplete::Update(StateMachine* sm, Game* game)
 void StateWaveComplete::Draw(StateMachine* sm, Game* game)
 {
 	//Clear
-	SDL_SetRenderDrawColor(Game::gRenderer, 0, 0, 0, 255);
 	SDL_RenderClear(Game::gRenderer);
+	SDL_RenderCopy(Game::gRenderer, Game::game_images[Game::eImages::BACKGROUND], NULL, NULL);
 
 	// Draw
 	black_hole->Draw();
@@ -325,6 +365,20 @@ void StateWaveComplete::Draw(StateMachine* sm, Game* game)
 		}
 	}
 	game->player->Draw();
+
+	if (game->vec_power_ups.size() != 0)
+	{
+		for (auto& pow : game->vec_power_ups)
+		{
+			pow->Draw();
+		}
+	}
+	//draw HUD
+	// sheild
+	SDL_RenderCopy(game->gRenderer, game->sheild_bg_bar, NULL, game->sheild_bar_rect);
+	SDL_SetRenderDrawColor(game->gRenderer, 204, 255, 255, 255);
+	SDL_RenderFillRect(game->gRenderer, game->sheild_amount_rect);
+	SDL_RenderCopy(game->gRenderer, game->sheild_icon, NULL, game->sheild_icon_rect);
 
 	SDL_RenderCopy(Game::gRenderer, wComplete, NULL, complete.get());
 

@@ -20,6 +20,8 @@
 void StatePlaying::Init(Game* game)
 {
 	printf("Initialising PLAYING STATE...\n");
+	game->collision_delay.DelayComplete(true);
+	game->player->damaged = true;
 }
 
 void StatePlaying::Cleanup()
@@ -28,15 +30,25 @@ void StatePlaying::Cleanup()
 	//delete this;
 }
 
-void StatePlaying::Pause()
+void StatePlaying::Pause(Game* game)
 {
 	printf("Playing State Paused.\n");
 }
 
-void StatePlaying::Resume()
+void StatePlaying::Resume(Game* game)
 {
 	printf("Playing State Resumed\n");
+	game->vec_power_ups.clear();
+	game->collision_delay.DelayComplete(true);
+	game->player->damaged = true;
 
+	for (auto& ast : game->vec_bg_asteroids)
+	{
+		if (!(ast->draw))
+		{
+			ast->draw = true;
+		}
+	}
 }
 
 void StatePlaying::HandleEvents(StateMachine* sm, Game* game)
@@ -63,7 +75,7 @@ void StatePlaying::HandleEvents(StateMachine* sm, Game* game)
 				sm->Quit();
 				break;
 			case SDLK_w:
-				if ((game->player->getImage() != Game::game_images[Game::eImages::SHIP_THRUST] && (!game->player->is_dead)))
+				if ((game->player->getImage() != Game::game_images[Game::eImages::SHIP_THRUST] && (!game->player->to_remove)))
 				{
 					game->player->setImage(Game::game_images[Game::eImages::SHIP_THRUST]);
 				}
@@ -128,7 +140,7 @@ void StatePlaying::HandleEvents(StateMachine* sm, Game* game)
 
 		if (!Mix_Playing(Game::eSounds::SHIP_THRUST))
 		{
-			Mix_PlayChannel(Game::eSounds::SHIP_THRUST, Game::game_sounds[Game::eSounds::SHIP_THRUST], -1);
+			Mix_PlayChannel(Game::eSounds::SHIP_THRUST, Game::game_sounds[Game::eSounds::SHIP_THRUST], 0);
 		}
 	}
 	if (keystates[SDL_SCANCODE_A] || keystates[SDL_SCANCODE_LEFT])
@@ -190,30 +202,19 @@ void StatePlaying::Update(StateMachine* sm, Game* game)
 				// re render the HUD score texture
 				game->gScore = game->LoadRenderedText(game->gScore, "SCORE: " + std::to_string(game->score), game->gtext_color, game->g_font, game->score_rect, game->s_r);
 
-				game->player->Damage(25.0f);
-				game->sheild_amount_rect->w = game->original_sheild_length * game->player->current_sheild;
+				sm->sheild_interp += game->player->Health(-25.0f);
 
 				// collision particles (TODO better calculation)
+				if (!(game->player->to_remove))
 				{
-					double radians = atan2(game->player->vel_x, game->player->vel_y);
+					float radians = atan2(game->player->vel_x, game->player->vel_y);
 					float previous_speed = sqrtf(powf(game->player->vel_x, 2) + powf(game->player->vel_y, 2));
 
-					double offset = (PI) * ((double)rand() / (double)RAND_MAX);
+					float offset = (PI) * ((float)rand() / (float)RAND_MAX);
 					if (abs(offset) < .2) { offset = .2; }
 
-					game->vec_particles.push_back(std::make_unique<Particles>(game->player->pos_x + game->player->center.x, game->player->pos_y + game->player->center.y, radians, previous_speed, offset, 15, game->s_r));
-				}
-
-				//game->player->vel_x += ast->vel_x/2;
-				//game->player->vel_y += ast->vel_y/2;
-				
-
-
-				if (game->player->is_dead)
-				{
-					// change to death state
-					ChangeState(sm, new StateDeath);
-					break;
+					game->vec_particles.push_back(std::make_unique<Particles>(game->player.get(), game->s_r));
+					//game->vec_particles.push_back(std::make_unique<Particles>(game->player->pos_x + game->player->center.x, game->player->pos_y + game->player->center.y, radians, previous_speed, offset, 15, game->s_r));
 				}
 			}
 		}
@@ -241,6 +242,22 @@ void StatePlaying::Update(StateMachine* sm, Game* game)
 		//loop through bullets
 		for (auto& bul : game->vec_bullets)
 		{
+			if (game->vec_power_ups.size() != 0)
+			{
+				for (auto& pow : game->vec_power_ups)
+				{
+					// if collision
+					if (bul->Collision(*pow))
+					{
+						Mix_PlayChannel(Game::eSounds::HIT_POWER, Game::game_sounds[Game::eSounds::HIT_POWER], 0);
+						bul->to_remove = true;
+						dynamic_cast<PowerUp*>(pow.get())->HandleDamage();
+
+						game->vec_particles.push_back(std::make_unique<Particles>(pow->pos_x + pow->center.x, pow->pos_y + pow->center.y, 10, game->s_r));
+						break;
+					}
+				}
+			}
 			// for each bullet check collision with all main asteroids
 			if (game->vec_asteroids.size() != 0)
 			{
@@ -249,24 +266,38 @@ void StatePlaying::Update(StateMachine* sm, Game* game)
 					// if collision
 					if (bul->Collision(*ast))
 					{
-						Mix_PlayChannel(Game::eSounds::HIT, Game::game_sounds[Game::eSounds::HIT], 0);
-						bul->is_dead = true;
-						ast->is_dead = true;
+						bul->to_remove = true;
+						ast->to_remove = true;
 						game->score += 100;
 						game->gScore = game->LoadRenderedText(game->gScore, "SCORE: " + std::to_string(game->score), game->gtext_color, game->g_font, game->score_rect, game->s_r);
 						if (ast->size > Asteroid::SMALL)
 						{
+							if (ast->size == Asteroid::MEDIUM)
+							{
+								Mix_PlayChannel(Game::eSounds::HIT_MED, Game::game_sounds[Game::eSounds::HIT_MED], 0);
+							}
+							else
+							{
+								Mix_PlayChannel(Game::eSounds::HIT_LRG, Game::game_sounds[Game::eSounds::HIT_LRG], 0);
+							}
+
 							game->Create2SubAsteroids((Asteroid*)(ast.get()), vec_tempAsteroids);
+							break;
 						}
 						else
 						{
+							Mix_PlayChannel(Game::eSounds::HIT_SML, Game::game_sounds[Game::eSounds::HIT_SML], 0);
+
 							game->vec_particles.push_back(std::make_unique<Particles>(ast->pos_x + ast->center.x, ast->pos_y + ast->center.y, 10, game->s_r));
+							sm->PowerUpChance(ast.get());
+						
 							break;
 						}
 
 					}
 				}
 			}
+
 			// update bullet location
 			bul->Update(dt);
 			// check if bullet is outside of screen (if so, set is_dead to true)
@@ -288,11 +319,37 @@ void StatePlaying::Update(StateMachine* sm, Game* game)
 		}
 	}
 
-	// If bullet/asteroid is marked as dead, remove them
-	game->vec_bullets.erase(std::remove_if(game->vec_bullets.begin(), game->vec_bullets.end(), [](std::unique_ptr<Entity>& e) { return (e->is_dead); }), game->vec_bullets.end());
-	game->vec_asteroids.erase(std::remove_if(game->vec_asteroids.begin(), game->vec_asteroids.end(), [](std::unique_ptr<Entity>& e) { return (e->is_dead); }), game->vec_asteroids.end());
-	game->vec_particles.erase(std::remove_if(game->vec_particles.begin(), game->vec_particles.end(), [](std::unique_ptr<Particles>& e) { return (e->is_complete); }), game->vec_particles.end());
+	if (game->vec_power_ups.size() != 0)
+	{
+		for (auto& pow : game->vec_power_ups)
+		{
+			pow->WrapCoords(game->SCREEN_WIDTH, game->SCREEN_HEIGHT);
+			pow->Update(dt);
 
+			if (pow->Collision(*(game->player)))
+			{
+				Mix_PlayChannel(Game::eSounds::COLLECT, Game::game_sounds[Game::eSounds::COLLECT], 0);
+				pow->to_remove = true;
+				// to do SWITCH STATEMENT
+				sm->sheild_interp += game->player->Health(25.0f);
+				game->vec_particles.push_back(std::make_unique<Particles>(pow.get(), game->s_r));
+			}
+		}
+	}
+
+	sm->HandleSheildInterp();
+
+	// If bullet/asteroid is marked as dead, remove them
+	game->vec_bullets.erase(std::remove_if(game->vec_bullets.begin(), game->vec_bullets.end(), [](std::unique_ptr<Entity>& e) { return (e->to_remove); }), game->vec_bullets.end());
+	game->vec_asteroids.erase(std::remove_if(game->vec_asteroids.begin(), game->vec_asteroids.end(), [](std::unique_ptr<Entity>& e) { return (e->to_remove); }), game->vec_asteroids.end());
+	game->vec_particles.erase(std::remove_if(game->vec_particles.begin(), game->vec_particles.end(), [](std::unique_ptr<Particles>& e) { return (e->is_complete); }), game->vec_particles.end());
+	game->vec_power_ups.erase(std::remove_if(game->vec_power_ups.begin(), game->vec_power_ups.end(), [](std::unique_ptr<Entity>& e) { return (e->to_remove); }), game->vec_power_ups.end());
+
+	if (game->player->to_remove)
+	{
+		// change to death state
+		ChangeState(sm, new StateDeath);
+	}
 
 	// IF KILLED ALL ASTEROIDS 
 	// STATE WAVE COMPLETE ############################################################################
@@ -300,22 +357,13 @@ void StatePlaying::Update(StateMachine* sm, Game* game)
 	{
 		sm->PushState(new StateWaveComplete); // create state
 	}
-
-	//if (game->game_reset) // MOVE ####################################################
-	//{
-	//	game->wComplete = game->LoadRenderedText(game->wComplete, "NEW GAME", game->gtext_color, game->l_font, game->complete, game->s_r);
-	//	game->complete.w *= .6;
-	//	game->complete.h *= .6;
-	//	game->complete.x = game->SCREEN_WIDTH / 2 - game->complete.w / 2;
-	//	game->complete.y = game->SCREEN_HEIGHT / 4 - game->complete.h / 2;
-	//}
 }
 
 void StatePlaying::Draw(StateMachine* sm, Game* game)
 {
 	// Draw
-	SDL_SetRenderDrawColor(game->gRenderer, 0, 0, 0, 255);
 	SDL_RenderClear(game->gRenderer);
+	SDL_RenderCopy(Game::gRenderer, Game::game_images[Game::eImages::BACKGROUND], NULL, NULL);
 
 	// draw background asteroids
 	if (game->vec_bg_asteroids.size() != 0)
@@ -347,6 +395,14 @@ void StatePlaying::Draw(StateMachine* sm, Game* game)
 		for (auto& ent : game->vec_bullets)
 		{
 			ent->Draw();
+		}
+	}
+
+	if (game->vec_power_ups.size() != 0)
+	{
+		for (auto& pow : game->vec_power_ups)
+		{
+			pow->Draw();
 		}
 	}
 

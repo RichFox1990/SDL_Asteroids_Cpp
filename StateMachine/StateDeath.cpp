@@ -15,11 +15,11 @@ void StateDeath::Init(Game* game)
 {
 	printf("Initialising Death State\n");
 
-	//game->player->damaged = true;
+	game->vec_power_ups.clear();
 	game->player->to_rotate = 2500;
 	game->player->setImage(Game::game_images[Game::eImages::SHIP]);
 	Mix_HaltChannel(Game::eSounds::SHIP_THRUST);
-
+	Mix_PlayChannel(Game::eSounds::DEATH, Game::game_sounds[Game::eSounds::DEATH], 0);
 	// TODO move this into own state after fleshing out/ redoing the highscore functionality
 	std::cout << "The 3rd highest score is " << game->high_score.top3[2].second << std::endl;
 
@@ -54,8 +54,6 @@ void StateDeath::Init(Game* game)
 	score_rect->h /= 2;
 	score_rect->y = game->SCREEN_HEIGHT / 2 - score_rect->h / 2;
 	score_rect->x = game->SCREEN_WIDTH / 2 - score_rect->w / 2;
-
-
 }
 
 void StateDeath::Cleanup()
@@ -75,12 +73,12 @@ void StateDeath::Cleanup()
 	//delete this;
 }
 
-void StateDeath::Pause()
+void StateDeath::Pause(Game* game)
 {
 	printf("Death State Paused.\n");
 }
 
-void StateDeath::Resume()
+void StateDeath::Resume(Game* game)
 {
 	printf("Death State Resumed\n");
 }
@@ -161,7 +159,7 @@ void StateDeath::Update(StateMachine* sm, Game* game)
 		}
 	}
 
-	game->vec_bullets.erase(std::remove_if(game->vec_bullets.begin(), game->vec_bullets.end(), [](std::unique_ptr<Entity>& e) { return (e->is_dead); }), game->vec_bullets.end());
+	game->vec_bullets.erase(std::remove_if(game->vec_bullets.begin(), game->vec_bullets.end(), [](std::unique_ptr<Entity>& e) { return (e->to_remove); }), game->vec_bullets.end());
 	//game->vec_asteroids.erase(std::remove_if(game->vec_asteroids.begin(), game->vec_asteroids.end(), [](std::unique_ptr<Entity>& e) { return (e->is_dead); }), game->vec_asteroids.end());
 	game->vec_particles.erase(std::remove_if(game->vec_particles.begin(), game->vec_particles.end(), [](std::unique_ptr<Particles>& e) { return (e->is_complete); }), game->vec_particles.end());
 }
@@ -169,8 +167,9 @@ void StateDeath::Update(StateMachine* sm, Game* game)
 void StateDeath::Draw(StateMachine* sm, Game* game)
 {
 	//Clear
-	SDL_SetRenderDrawColor(game->gRenderer, 0, 0, 0, 255);
 	SDL_RenderClear(game->gRenderer);
+	SDL_RenderCopy(Game::gRenderer, Game::game_images[Game::eImages::BACKGROUND], NULL, NULL);
+
 
 	// Draw
 	for (auto& ast : game->vec_bg_asteroids)

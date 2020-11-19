@@ -5,12 +5,14 @@
 
 class GameState;
 class Game;
+class Entity;
 
 class StateMachine
 {
 public:
 	Game* game = nullptr;
 	StateMachine(Game* game);
+	float sheild_interp = 0;
 
 	void Init();
 	void Cleanup();
@@ -27,6 +29,8 @@ public:
 	void CalculateDelta();
 	void ResetDelta();
 	float GetDelta() { return delta_time; };
+	void HandleSheildInterp();
+	void PowerUpChance(Entity* ent);
 
 	bool Running() { return is_running; };
 	void ResetGame() { reset_game = true; }

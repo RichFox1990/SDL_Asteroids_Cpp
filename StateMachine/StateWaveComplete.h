@@ -14,8 +14,8 @@ public:
     void Init(Game* game) override;
     void Cleanup() override;
 
-    void Pause() override;
-    void Resume() override;
+    void Pause(Game* game) override;
+    void Resume(Game* game) override;
 
     void HandleEvents(StateMachine* sm, Game* game) override;
     void Update(StateMachine* sm, Game* game) override;
@@ -28,13 +28,17 @@ public:
     SDL_Texture* lComplete = nullptr;
 
     //std::unique_ptr<DelayTimer> InterpPlayer;
+    bool entered_bh = false;
     DelayTimer* InterpPlayer = nullptr;
-    double percentage_elapsed = 0.0;
-    double total_time = 0.0;
+    float percentage_elapsed = 0.0;
+    float total_time = 0.0;
     bool sound_played = false;
     bool popped_state = false;
 
-    double interp_vec_x, interp_vec_y;
+    float interp_vec_x, interp_vec_y;
     SDL_Rect* copy_player_rect = nullptr;
+
+private:
+    Game* pGame = nullptr;
 };
 

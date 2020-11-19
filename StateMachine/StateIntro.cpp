@@ -20,12 +20,12 @@ void StateIntro::Cleanup()
 	//delete this;
 }
 
-void StateIntro::Pause()
+void StateIntro::Pause(Game* game)
 {
 	printf("Intro State Paused.\n");
 }
 
-void StateIntro::Resume()
+void StateIntro::Resume(Game* game)
 {
 	printf("Intro State Resumed\n");
 }

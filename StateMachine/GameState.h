@@ -8,8 +8,8 @@ public:
     virtual void Init(Game* game) = 0;
     virtual void Cleanup() = 0;
 
-    virtual void Pause() = 0;
-    virtual void Resume() = 0;
+    virtual void Pause(Game* game) = 0;
+    virtual void Resume(Game* game) = 0;
 
     virtual void HandleEvents(StateMachine* sm, Game* game) = 0;
     virtual void Update(StateMachine* sm, Game* game) = 0;

@@ -5,19 +5,19 @@ void Entity::WrapCoords(int sw, int sh)
 {
 	if (pos_x < 0.0 - width)
 	{
-		pos_x += sw + (double)width;
+		pos_x += sw + width;
 	}
 	if (pos_x > sw)
 	{
-		pos_x -= sw + (double)width;
+		pos_x -= sw + width;
 	}
 	if (pos_y < 0.0 - height)
 	{
-		pos_y += sh + (double)height;
+		pos_y += sh + height;
 	}
 	if (pos_y > sh)
 	{
-		pos_y -= sh + (double)height;
+		pos_y -= sh + height;
 	}
 }
 

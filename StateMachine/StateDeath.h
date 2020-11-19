@@ -10,8 +10,8 @@ public:
     void Init(Game* game) override;
     void Cleanup() override;
 
-    void Pause() override;
-    void Resume() override;
+    void Pause(Game* game) override;
+    void Resume(Game* game) override;
 
     void HandleEvents(StateMachine* sm, Game* game) override;
     void Update(StateMachine* sm, Game* game) override;
@@ -22,8 +22,8 @@ private:
     SDL_Texture* death1 = nullptr;
     SDL_Texture* play_again = nullptr;
 
-    SDL_Rect* death1_rect;
-    SDL_Rect* play_rect;
-    SDL_Rect* score_rect;
+    SDL_Rect* death1_rect = nullptr;
+    SDL_Rect* play_rect = nullptr;
+    SDL_Rect* score_rect = nullptr;
 };
 

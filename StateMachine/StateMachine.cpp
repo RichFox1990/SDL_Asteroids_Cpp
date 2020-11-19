@@ -88,7 +88,7 @@ void StateMachine::PushState(GameState* state)
 	// Pause the current state
 	if (!states.empty())
 	{
-		states.back()->Pause();
+		states.back()->Pause(game);
 	}
 
 	// Add the new state and Init
@@ -108,11 +108,51 @@ void StateMachine::PopState()
 	// If theres still states in the list, Resume them.
 	if (!states.empty())
 	{
-		states.back()->Resume();
+		states.back()->Resume(game);
 	}
 	else
 	{
 		printf("NOTHING TO RESUME!!!!\n");
+	}
+}
+
+void StateMachine::HandleSheildInterp()
+{
+	if (sheild_interp < 0)
+	{
+		float amount = .25f * delta_time;
+		sheild_interp += amount;
+		if (sheild_interp >= 0)
+		{
+			sheild_interp = 0;
+		}
+	}
+	else if (sheild_interp > 0)
+	{
+		float amount = .25f * delta_time;
+		sheild_interp -= amount;
+		if (sheild_interp <= 0)
+		{
+			sheild_interp = 0;
+		}
+	}
+	if (game->player->current_sheild - sheild_interp > 1.0f)
+	{
+		sheild_interp = 0;
+	}
+	else if (game->player->current_sheild - sheild_interp < 0)
+	{
+		game->player->to_remove = true;
+	}
+	game->sheild_amount_rect->w = game->original_sheild_length * (game->player->current_sheild - sheild_interp);
+}
+
+void StateMachine::PowerUpChance(Entity* ent)
+{
+	float x = (float)rand() / (float)RAND_MAX;
+	if (x < game->drop_rate)
+	{
+		game->vec_power_ups.push_back(std::make_unique<PowerUp>(ent, game->s_r));
 	}
 }
 
@@ -122,11 +162,11 @@ void StateMachine::SetupNextWave()
 	game->current_level++;
 	game->MAX_ASTEROID_SPEED += 10;
 	game->MIN_ASTEROID_SPEED += 5;
-	double x, y;
+	float x, y;
 	for (int i = 0; i < game->asteroid_amount + game->current_level; i++)
 	{
-		x = (((double)rand() / (double)RAND_MAX)) * game->SCREEN_WIDTH;
-		y = (((double)rand() / (double)RAND_MAX)) * game->SCREEN_HEIGHT;
+		x = (((float)rand() / (float)RAND_MAX)) * (float)game->SCREEN_WIDTH;
+		y = (((float)rand() / (float)RAND_MAX)) * (float)game->SCREEN_HEIGHT;
 		game->CreateAsteroid(x, y, Asteroid::LARGE, true, false, game->vec_asteroids, game->s_r);
 	}
 }
@@ -142,18 +182,19 @@ void StateMachine::FullResetGame()
 	game->vec_asteroids.clear();
 	game->vec_bullets.clear();
 	game->vec_particles.clear();
+	game->vec_power_ups.clear();
 	game->vec_asteroids.reserve(50);
 	game->vec_bullets.reserve(20);
 	game->vec_particles.reserve(20);
 
 	//player = std::make_unique<Player>(screen_center_x, screen_center_y, s_r);
-	game->player->current_sheild = 1.0f;
+	game->player->current_sheild = game->starting_sheild;
 	game->sheild_amount_rect->w = game->original_sheild_length * game->player->current_sheild;
 
 	game->player->pos_x = game->screen_center_x;
 	game->player->pos_y = game->screen_center_y;
 	game->player->to_rotate = 0;
-	game->player->is_dead = false;
+	game->player->to_remove = false;
 	game->player->vel_x = game->player->vel_y = 0;
 
 	game->score = 0;
@@ -163,11 +204,11 @@ void StateMachine::FullResetGame()
 
 	game->current_level = 1;
 	// Create main asteroids
-	double x, y;
+	float x, y;
 	for (int i = 0; i < game->asteroid_amount + game->current_level; i++)
 	{
-		x = (((double)rand() / (double)RAND_MAX)) * game->SCREEN_WIDTH;
-		y = (((double)rand() / (double)RAND_MAX)) * game->SCREEN_HEIGHT;
+		x = (((float)rand() / (float)RAND_MAX)) * (float)game->SCREEN_WIDTH;
+		y = (((float)rand() / (float)RAND_MAX)) * (float)game->SCREEN_HEIGHT;
 		game->CreateAsteroid(x, y, Asteroid::LARGE, true, false, game->vec_asteroids, game->s_r);
 	}
 

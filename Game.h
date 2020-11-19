@@ -7,9 +7,10 @@
 #include <SDL_ttf.h>
 #include <SDL_mixer.h>
 #include "Particles.h"
+#include "PowerUp.h"
 
 // TODO refactor below to reference and pointer within code
-#include "DelayTimer.h"
+//#include "DelayTimer.h"
 #include "HighScore.h"
 
 // forward decloration
@@ -60,10 +61,15 @@ public:
 	bool is_running() const;
 	void set_running(const bool new_bool);
 
+	float starting_sheild = 0.5f;
+	float drop_rate = 0.1;
+
 	bool wave_complete = false;
 	mutable bool game_reset = false;
 	//char play_again = NULL;
 	int FPS;
+	SDL_Window* gWindow = nullptr;
+
 
 	struct GameState
 	{
@@ -86,6 +92,7 @@ public:
 		enum names
 		{
 			SPLASH,
+			BACKGROUND,
 			SHIP,
 			SHIP_THRUST,
 			ASTEROID1,
@@ -96,7 +103,7 @@ public:
 			SHEILD_BG_BAR,
 			CIRCLE,
 			B_BLACK_HOLE,
-			OUTER_PICKUP,
+			SHEILD_PICKUP,
 			TOTAL_IMAGES
 		};
 	};
@@ -106,6 +113,7 @@ public:
 	std::string image_path[eImages::TOTAL_IMAGES]
 	{
 		"images/Splash2.png",
+		"images/background.png",
 		"images/ship_normal.png",
 		"images/ship_thrust.png",
 		"images/ast1.png",
@@ -116,7 +124,7 @@ public:
 		"images/sheild_background.png",
 		"images/circle.png",
 		"images/blueblackhole.png",
-		"images/outer_pickup.png"
+		"images/sheild_pickup.png"
 	};
 
 	// Enum reference for gImages array of textures
@@ -125,12 +133,16 @@ public:
 		enum names
 		{
 			SHOOT,
-			HIT,
+			HIT_SML,
+			HIT_MED,
+			HIT_LRG,
+			HIT_POWER,
 			SHIP_HIT,
 			SHIP_THRUST,
-			SHIELD_UP,
+			COLLECT,
 			BLACK_HOLE,
 			ENTER_BH,
+			DEATH,
 			HIGH_SCORE,
 			TOTAL_SOUNDS
 		};
@@ -141,37 +153,37 @@ public:
 	std::string sound_path[eSounds::TOTAL_SOUNDS]
 	{
 		"sounds/shoot.wav",
-		"sounds/hit.wav",
+		"sounds/bang_small.wav",
+		"sounds/bang_medium.wav",
+		"sounds/bang_large.wav",
+		"sounds/bang_power_up.wav",
 		"sounds/ship_hit.wav",
 		"sounds/ship_thrust.wav",
-		"sounds/shield_up.wav",
+		"sounds/collect.wav",
 		"sounds/blackhole.wav",
 		"sounds/enter_bh.wav",
+		"sounds/death.wav",
 		"sounds/high_score.wav",
 	};
 
 private:
 	void Init();
 	void LoadMedia();
-	void ResetGame();
 	void ExitGame();
-	//void HandleWaveCompletion();
-	void CreateAsteroid(double x, double y, const float size, const bool isCollidable, const bool allowed_near_player, std::vector<std::unique_ptr<Entity>>& vector, const float screen_ratio);
+	void CreateAsteroid(float x, float y, const float size, const bool isCollidable, const bool allowed_near_player, std::vector<std::unique_ptr<Entity>>& vector, const float screen_ratio);
 	void Create2SubAsteroids(const Asteroid* const ast, std::vector<std::unique_ptr<Entity>>& vector);
 	void CreateBackgroundAsteroids(const int amount);
-	void NextLevelTransition(const int center_x, const int center_y);
-	void HandleDeath();
 	void HudDraw() const;
 
 	SDL_Texture* LoadRenderedText(SDL_Texture* texture, const std::string textureText, const SDL_Color& const textColor, TTF_Font* const font, SDL_Rect& rect, const float s_r);
 	SDL_Texture* LoadImageData(const std::string& path, bool& allMediaLoaded);
 
 	DelayTimer shot_delay{ 200.0f , true };
-	DelayTimer collision_delay{ 1500.0f , false };
+	DelayTimer collision_delay{ 2500.0f , false };
 	DelayTimer wave_delay{ 4000.0f , false };
 	DelayTimer particle_delay{ 35.0f , true };
 
-	int asteroid_amount = 0;
+	int asteroid_amount = 2;
 	int MAX_ASTEROID_SPEED = 250;
 	int MIN_ASTEROID_SPEED = 75;
 
@@ -208,21 +220,15 @@ private:
 	SDL_Rect* sheild_bar_rect = nullptr;
 	SDL_Rect* sheild_icon_rect = nullptr;
 
-	//SDL_Texture* wComplete = nullptr;
 	SDL_Texture* lComplete = nullptr;
 
-	/*SDL_Texture* death1 = nullptr;
-	SDL_Texture* death2 = nullptr;
-
-	SDL_Rect death1_rect;
-	SDL_Rect death2_rect;*/
+	SDL_Rect fullscreen{ 0,0, SCREEN_WIDTH, SCREEN_HEIGHT };
 	SDL_Rect score_rect;
-	//SDL_Rect complete;
-	SDL_Window* gWindow = nullptr;
 
 	std::vector<std::unique_ptr<Entity>> vec_bg_asteroids;
 	std::vector<std::unique_ptr<Entity>> vec_asteroids;
 	std::vector<std::unique_ptr<Entity>> vec_bullets;
 	std::vector<std::unique_ptr<Particles>> vec_particles;
+	std::vector<std::unique_ptr<Entity>> vec_power_ups;
 	std::unique_ptr<Player> player;
 };

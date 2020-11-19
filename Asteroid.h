@@ -4,13 +4,13 @@
 class Asteroid : public Entity
 {
 public:
-	double angle_modifier = 0;
+	float angle_modifier = 0;
 	SDL_Texture* img = nullptr;
 
-	Asteroid(const double x, const double y, const double vx, const double vy, const int angle, float asteriod_size, const bool isCollidable, const float screen_ratio);
+	Asteroid(const float x, const float y, const float vx, const float vy, const int angle, float asteriod_size, const bool isCollidable, const float screen_ratio);
 
 	void Draw() const override;
-	void Update(const double dt) override;
+	void Update(const float dt) override;
 	~Asteroid(); // clear rects
 
 	enum SIZE

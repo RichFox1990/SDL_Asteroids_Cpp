@@ -16,12 +16,12 @@ void StateWaveTransition::Cleanup()
 	
 }
 
-void StateWaveTransition::Pause()
+void StateWaveTransition::Pause(Game* game)
 {
 	printf("Wave Transition State Paused.\n");
 }
 
-void StateWaveTransition::Resume()
+void StateWaveTransition::Resume(Game* game)
 {
 	printf("Wave Transition State Resumed\n");
 }
